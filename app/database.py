@@ -11,8 +11,8 @@ Base = declarative_base()
 
 
 # for migration
-# engine_for_migration = create_engine(SQLALCHEMY_DATABASE_URL, future=True)
 # Into .env remove +asyncpg
+# engine_for_migration = create_engine(SQLALCHEMY_DATABASE_URL, future=True)
 
 
 async_engine = create_async_engine(url=SQLALCHEMY_DATABASE_URL)

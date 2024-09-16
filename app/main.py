@@ -3,10 +3,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from app.constants import origins, prefix_v1
 from app.modules.user.presentation.routes.v1.routes_v1 import user_router
+from app.modules.share.infra.exception_handlers import (
+    value_error_handler,
+    runtime_error_handler,
+    generic_exception_handler,
+)
 
 app = FastAPI()
 
-# Configuración del middleware CORS
+app.add_exception_handler(ValueError, value_error_handler)
+app.add_exception_handler(RuntimeError, runtime_error_handler)
+app.add_exception_handler(Exception, generic_exception_handler)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
