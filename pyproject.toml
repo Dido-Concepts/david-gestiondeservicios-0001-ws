@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "app"
+version = "0.1.0"
+description = "Aplicacion Web Service para la gestion de servicios de la barberia David"
+authors = ["Esteban Villantoy <villantoyesteban@gmail.com>"]
+readme = "README.md"
+
+
+[tool.poetry.scripts]
+format = "scripts:format"
+lint = "scripts:lint"
+typecheck = "scripts:typecheck"
+dev = "scripts:dev"
+migration = "scripts:migrations"
+seed_initial_data = "scripts:seed_initial_data"
+
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = { extras = ["standard"], version = "^0.114.0" }
+sqlalchemy = "^2.0.34"
+alembic = "^1.13.2"
+psycopg2-binary = "^2.9.9"
+asyncpg = "^0.29.0"
+
+
+[tool.poetry.group.dev.dependencies]
+flake8 = "^7.1.1"
+mypy = "^1.11.2"
+black = "^24.8.0"
+click = "^8.1.7"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
