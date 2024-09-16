@@ -12,6 +12,7 @@ class Users(Base):
     user_name: Mapped[str] = mapped_column(String, nullable=False)
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     status: Mapped[Status] = mapped_column(SQLEnum(Status), default=Status.ACTIVE)
+    # campos de auditoria refactorizar en una clase mixin
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow

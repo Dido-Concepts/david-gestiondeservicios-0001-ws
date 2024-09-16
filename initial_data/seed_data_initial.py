@@ -40,7 +40,7 @@ async def init_db(db: AsyncSession) -> None:
         await db.commit()
 
         # Inserción de páginas
-        pages = ["dashboard", "user"]
+        pages = ["dashboard"]
         for page in pages:
             result = await db.execute(select(Pages).filter(Pages.name == page))
             if not result.scalars().first():

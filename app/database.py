@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from sqlalchemy.ext.declarative import declarative_base
 from os import getenv
 
-# from sqlalchemy import create_engine # for migration
+# from sqlalchemy import create_engine  # for migration
 
 
 SQLALCHEMY_DATABASE_URL = getenv("DATABASE_PUBLIC_URL", "")
