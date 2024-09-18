@@ -1,7 +1,7 @@
 from app.modules.user.domain.repositories.user_repository import UserRepository
 from math import ceil
 from sqlalchemy.future import select
-from app.modules.user.domain.models.user_domain import User
+from app.modules.user.domain.models.user_domain import UserRole
 from sqlalchemy.sql import func
 from sqlalchemy.orm import joinedload
 from app.modules.user.infra.migration.models import Users, UserRoles, Roles
@@ -45,7 +45,7 @@ class UserImplementationRepository(UserRepository):
 
     async def find_all_users(
         self, page_index: int, page_size: int
-    ) -> ResponseList[User]:
+    ) -> ResponseList[UserRole]:
         if page_index < 1:
             raise ValueError("Invalid page index")
 

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from app.modules.user.domain.models.user_domain import User
+from app.modules.user.domain.models.user_domain import UserRole
 from app.modules.share.domain.repositories.repository_types import ResponseList
 
 
@@ -11,5 +11,5 @@ class UserRepository(ABC):
     @abstractmethod
     async def find_all_users(
         self, page_index: int, page_size: int
-    ) -> ResponseList[User]:
+    ) -> ResponseList[UserRole]:
         pass
