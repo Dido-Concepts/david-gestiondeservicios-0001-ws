@@ -1,8 +1,12 @@
 from datetime import datetime
+
+from sqlalchemy import DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.database import Base
 from app.modules.user.domain.models.user_enum import Status
-from sqlalchemy import String, DateTime, Integer, Enum as SQLEnum, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
 class Users(Base):

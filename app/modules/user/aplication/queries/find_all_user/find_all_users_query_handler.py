@@ -1,16 +1,14 @@
+from app.modules.share.aplication.view_models.paginated_items_view_model import (
+    MetaPaginatedItemsViewModel,
+    PaginatedItemsViewModel,
+)
 from app.modules.share.domain.handler.request_handler import IRequestHandler
-from app.modules.user.domain.repositories.user_repository import UserRepository
+from app.modules.user.aplication.queries.find_all_user.find_all_users_query import FindAllUsersQuery
 from app.modules.user.aplication.queries.find_all_user.find_all_users_query_response import (
     FindAllUsersQueryResponse,
     RoleResponse,
 )
-from app.modules.share.aplication.view_models.paginated_items_view_model import (
-    PaginatedItemsViewModel,
-    MetaPaginatedItemsViewModel,
-)
-from app.modules.user.aplication.queries.find_all_user.find_all_users_query import (
-    FindAllUsersQuery,
-)
+from app.modules.user.domain.repositories.user_repository import UserRepository
 
 
 class FindAllUsersQueryHandler(

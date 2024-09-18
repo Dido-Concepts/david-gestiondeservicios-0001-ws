@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from app.modules.user.domain.models.user_domain import UserRole
+
 from app.modules.share.domain.repositories.repository_types import ResponseList
+from app.modules.user.domain.models.user_domain import UserRole
 
 
 class UserRepository(ABC):

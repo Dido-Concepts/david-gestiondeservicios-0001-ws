@@ -1,6 +1,5 @@
-from typing import List, TypeVar, Generic
 from dataclasses import dataclass
-
+from typing import Generic, List, TypeVar
 
 T = TypeVar("T")
 

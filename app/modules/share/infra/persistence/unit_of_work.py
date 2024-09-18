@@ -1,6 +1,7 @@
-from typing import Callable, Coroutine, Any, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
 from types import TracebackType
+from typing import Any, Callable, Coroutine, Optional
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class UnitOfWork:

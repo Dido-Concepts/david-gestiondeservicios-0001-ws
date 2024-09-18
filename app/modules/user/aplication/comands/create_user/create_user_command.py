@@ -1,5 +1,6 @@
-from pydantic import BaseModel, EmailStr, validator
 import re
+
+from pydantic import BaseModel, EmailStr, field_validator
 
 
 class CreateUserCommand(BaseModel):
@@ -7,7 +8,7 @@ class CreateUserCommand(BaseModel):
     email: EmailStr
     id_rol: int
 
-    @validator("user_name")
+    @field_validator("user_name")
     def validate_user_name(cls, value: str) -> str:
         if not re.match(r"^[a-zA-ZÀ-ÿ\s]+$", value):
             raise ValueError(
@@ -15,7 +16,7 @@ class CreateUserCommand(BaseModel):
             )
         return value
 
-    @validator("email")
+    @field_validator("email")
     def validate_email_domain(cls, value: EmailStr) -> EmailStr:
         if not value.endswith("@gmail.com"):
             raise ValueError("El correo electrónico debe ser un Gmail (@gmail.com).")

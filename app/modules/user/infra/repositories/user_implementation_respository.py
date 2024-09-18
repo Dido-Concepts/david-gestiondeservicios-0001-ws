@@ -1,15 +1,15 @@
-from app.modules.user.domain.repositories.user_repository import UserRepository
 from math import ceil
+
 from sqlalchemy.future import select
-from app.modules.user.domain.models.user_domain import UserRole
-from sqlalchemy.sql import func
 from sqlalchemy.orm import joinedload
-from app.modules.user.infra.migration.models import Users, UserRoles, Roles
-from app.modules.user.infra.mappers.user_mapper import UserMapper
+from sqlalchemy.sql import func
+
 from app.modules.share.domain.repositories.repository_types import ResponseList
-from app.modules.share.infra.persistence.unit_of_work import (
-    UnitOfWork,
-)
+from app.modules.share.infra.persistence.unit_of_work import UnitOfWork
+from app.modules.user.domain.models.user_domain import UserRole
+from app.modules.user.domain.repositories.user_repository import UserRepository
+from app.modules.user.infra.mappers.user_mapper import UserMapper
+from app.modules.user.infra.migration.models import Roles, UserRoles, Users
 
 
 class UserImplementationRepository(UserRepository):
@@ -21,15 +21,15 @@ class UserImplementationRepository(UserRepository):
         async with self._uow as uow:
             session = uow.session
 
-            result = await session.execute(select(Users).where(Users.email == email))
-            existing_user = result.scalars().first()
-
+            existing_user = await session.scalar(
+                select(Users).where(Users.email == email)
+            )
             if existing_user:
                 raise ValueError(f"User with email {email} already exists")
 
-            result = await session.execute(select(Roles).where(Roles.id == id_rol))
-            existing_role = result.scalars().first()
-
+            existing_role = await session.scalar(
+                select(Roles).where(Roles.id == id_rol)
+            )
             if not existing_role:
                 raise ValueError(f"Role with id {id_rol} does not exist")
 

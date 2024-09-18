@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from datetime import datetime
-from app.modules.user.domain.models.user_enum import Status
+
 from app.modules.user.domain.models.role_domain import Role
+from app.modules.user.domain.models.user_enum import Status
 
 
 @dataclass
