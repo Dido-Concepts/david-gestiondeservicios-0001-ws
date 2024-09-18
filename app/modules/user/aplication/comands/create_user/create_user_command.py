@@ -20,3 +20,11 @@ class CreateUserCommand(BaseModel):
         if not value.endswith("@gmail.com"):
             raise ValueError("El correo electrónico debe ser un Gmail (@gmail.com).")
         return value
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {"user_name": "Juan Perez", "email": "example@gmail.com", "id_rol": 1}
+            ]
+        }
+    }

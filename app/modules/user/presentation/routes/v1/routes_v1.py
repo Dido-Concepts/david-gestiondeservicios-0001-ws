@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Query
+from typing import Annotated
 from app.modules.user.aplication.mediator.user_mediator import UserMediator
 from app.modules.user.domain.models.user_domain import User
 from app.modules.user.aplication.comands.create_user.create_user_command import (
@@ -21,12 +22,10 @@ user_router = APIRouter()
 
 @user_router.get("/users")
 async def list_users(
-    page_index: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1),
+    query_params: Annotated[FindAllUsersQuery, Query()],
     mediator: UserMediator = Depends(get_user_mediator),
 ) -> PaginatedItemsViewModel[User]:
-    query = FindAllUsersQuery(page_index=page_index, page_size=page_size)
-    result = await mediator.send(query)
+    result = await mediator.send(query_params)
     return result
 
 
