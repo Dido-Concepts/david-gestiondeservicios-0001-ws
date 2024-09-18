@@ -29,3 +29,10 @@ class Role:
     name: str
     description: str
     permissions: List[Permission]
+
+
+@dataclass
+class Rol:
+    id: int
+    name: str
+    description: str

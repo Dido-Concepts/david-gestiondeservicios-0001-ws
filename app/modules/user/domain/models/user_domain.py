@@ -1,11 +1,22 @@
 from dataclasses import dataclass
-from typing import Optional
-from app.modules.user.domain.models.role_domain import Role
+from datetime import datetime
+from app.modules.user.domain.models.role_domain import Role, Rol
+from app.modules.user.domain.models.user_enum import Status
+
+
+@dataclass
+class UserWithRoleAndPermissions:
+    id: int
+    user_name: str
+    email: str
+    role: Role
 
 
 @dataclass
 class User:
-    id: Optional[int]
+    id: int
     user_name: str
     email: str
-    role: Role
+    status: Status
+    rol: Rol
+    created_at: datetime

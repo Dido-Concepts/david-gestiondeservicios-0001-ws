@@ -1,6 +1,6 @@
 from datetime import datetime
 from app.database import Base
-from app.modules.user.infra.migration.enums import Status
+from app.modules.user.domain.models.user_enum import Status
 from sqlalchemy import String, DateTime, Integer, Enum as SQLEnum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

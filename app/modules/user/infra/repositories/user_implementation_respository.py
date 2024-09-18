@@ -1,6 +1,12 @@
 from app.modules.user.domain.repositories.user_repository import UserRepository
+from math import ceil
 from sqlalchemy.future import select
+from app.modules.user.domain.models.user_domain import User
+from sqlalchemy.sql import func
+from sqlalchemy.orm import joinedload
 from app.modules.user.infra.migration.models import Users, UserRoles, Roles
+from app.modules.user.infra.mappers.user_mapper import UserMapper
+from app.modules.share.domain.repositories.repository_types import ResponseList
 from app.modules.share.infra.persistence.unit_of_work import (
     UnitOfWork,
 )
@@ -8,23 +14,22 @@ from app.modules.share.infra.persistence.unit_of_work import (
 
 class UserImplementationRepository(UserRepository):
     def __init__(self, uow: UnitOfWork):
-        self.uow = uow
+        self._uow = uow
+        self._user_mapper = UserMapper()
 
     async def create_user(self, user_name: str, email: str, id_rol: int) -> bool:
-        async with self.uow as uow:
-
+        async with self._uow as uow:
             session = uow.session
 
             result = await session.execute(select(Users).where(Users.email == email))
-
             existing_user = result.scalars().first()
 
             if existing_user:
                 raise ValueError(f"User with email {email} already exists")
 
             result = await session.execute(select(Roles).where(Roles.id == id_rol))
-
             existing_role = result.scalars().first()
+
             if not existing_role:
                 raise ValueError(f"Role with id {id_rol} does not exist")
 
@@ -37,3 +42,40 @@ class UserImplementationRepository(UserRepository):
             await session.commit()
 
             return True
+
+    async def find_all_users(
+        self, page_index: int, page_size: int
+    ) -> ResponseList[User]:
+        if page_index < 1:
+            raise ValueError("Invalid page index")
+
+        async with self._uow as uow:
+            session = uow.session
+
+            total_users = await session.scalar(select(func.count(Users.id))) or 0
+            total_pages = max(ceil(total_users / page_size), 1)
+            offset_value = page_size * (page_index - 1)
+
+            if page_index > total_pages:
+                raise ValueError(
+                    f"Invalid page index {page_index} for {total_pages} total pages"
+                )
+
+            smt = (
+                select(UserRoles)
+                .options(joinedload(UserRoles.user), joinedload(UserRoles.role))
+                .limit(page_size)
+                .offset(offset_value)
+            )
+
+            result = await session.execute(smt)
+            users_with_roles = result.scalars().all()
+
+            users = [
+                self._user_mapper.map_from(user_result)
+                for user_result in users_with_roles
+            ]
+
+            return ResponseList(
+                data=users, total_items=total_users, total_pages=total_pages
+            )
