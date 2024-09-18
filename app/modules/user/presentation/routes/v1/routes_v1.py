@@ -5,13 +5,19 @@ from fastapi import APIRouter, Depends, Query
 from app.modules.share.aplication.view_models.paginated_items_view_model import (
     PaginatedItemsViewModel,
 )
-from app.modules.user.aplication.comands.create_user.create_user_command import CreateUserCommand
+from app.modules.user.aplication.comands.create_user.create_user_command import (
+    CreateUserCommand,
+)
 from app.modules.user.aplication.mediator.user_mediator import UserMediator
-from app.modules.user.aplication.queries.find_all_user.find_all_users_query import FindAllUsersQuery
+from app.modules.user.aplication.queries.find_all_user.find_all_users_query import (
+    FindAllUsersQuery,
+)
 from app.modules.user.aplication.queries.find_all_user.find_all_users_query_response import (
     FindAllUsersQueryResponse,
 )
-from app.modules.user.presentation.dependencies.user_dependencies import get_user_mediator
+from app.modules.user.presentation.dependencies.user_dependencies import (
+    get_user_mediator,
+)
 
 user_router = APIRouter()
 
