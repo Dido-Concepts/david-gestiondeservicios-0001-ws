@@ -3,12 +3,14 @@ from app.modules.share.aplication.view_models.paginated_items_view_model import 
     PaginatedItemsViewModel,
 )
 from app.modules.share.domain.handler.request_handler import IRequestHandler
+from app.modules.user.aplication.queries.find_all_role.find_all_role_query_response import (
+    FindAllRoleQueryResponse,
+)
 from app.modules.user.aplication.queries.find_all_user.find_all_users_query import (
     FindAllUsersQuery,
 )
 from app.modules.user.aplication.queries.find_all_user.find_all_users_query_response import (
     FindAllUsersQueryResponse,
-    RoleResponse,
 )
 from app.modules.user.domain.repositories.user_repository import UserRepository
 
@@ -24,7 +26,7 @@ class FindAllUsersQueryHandler(
     async def handle(
         self, query: FindAllUsersQuery
     ) -> PaginatedItemsViewModel[FindAllUsersQueryResponse]:
-        res = await self.user_repository.find_all_users(
+        res = await self.user_repository.find_users(
             page_index=query.page_index, page_size=query.page_size
         )
 
@@ -34,8 +36,10 @@ class FindAllUsersQueryHandler(
                 user_name=user_role.user.user_name,
                 email=user_role.user.email,
                 status=user_role.user.status,
-                role=RoleResponse(
-                    id=user_role.role.id, description=user_role.role.description
+                role=FindAllRoleQueryResponse(
+                    id=user_role.role.id,
+                    description=user_role.role.description,
+                    name=user_role.role.name,
                 ),
                 created_at=user_role.user.created_at,
             )

@@ -6,7 +6,7 @@ R = TypeVar("R")
 T = TypeVar("T")
 
 
-class UserMediator(Generic[R, T]):
+class Mediator(Generic[R, T]):
     def __init__(self) -> None:
         self._handlers: Dict[Type[R], IRequestHandler[R, T]] = {}
 

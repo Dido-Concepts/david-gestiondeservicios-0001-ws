@@ -2,6 +2,13 @@ from dataclasses import dataclass
 
 
 @dataclass
+class Role:
+    id: int
+    name: str
+    description: str
+
+
+@dataclass
 class Action:
     id: int
     name: str
@@ -9,14 +16,7 @@ class Action:
 
 
 @dataclass
-class Page:
+class RolePermission:
     id: int
-    name: str
-    description: str
-
-
-@dataclass
-class Role:
-    id: int
-    name: str
-    description: str
+    role: Role
+    action: Action

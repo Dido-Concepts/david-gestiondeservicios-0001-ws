@@ -16,7 +16,6 @@ class Users(Base):
     user_name: Mapped[str] = mapped_column(String, nullable=False)
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     status: Mapped[Status] = mapped_column(SQLEnum(Status), default=Status.ACTIVE)
-    # campos de auditoria refactorizar en una clase mixin
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
@@ -60,33 +59,15 @@ class Accions(Base):
     )
 
 
-class Pages(Base):
-    __tablename__ = "pages"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    description: Mapped[str] = mapped_column(String, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
-
-    permissions: Mapped[list["Permissions"]] = relationship(
-        "Permissions", back_populates="page"
-    )
-
-
 class Permissions(Base):
     __tablename__ = "permissions"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     role_id: Mapped[int] = mapped_column(ForeignKey("roles.id"), nullable=False)
     accion_id: Mapped[int] = mapped_column(ForeignKey("accions.id"), nullable=False)
-    page_id: Mapped[int] = mapped_column(ForeignKey("pages.id"), nullable=False)
 
     role: Mapped["Roles"] = relationship("Roles", back_populates="permissions")
     accion: Mapped["Accions"] = relationship("Accions", back_populates="permissions")
-    page: Mapped["Pages"] = relationship("Pages", back_populates="permissions")
 
 
 class UserRoles(Base):
