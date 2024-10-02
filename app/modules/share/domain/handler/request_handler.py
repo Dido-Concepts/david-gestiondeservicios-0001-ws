@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
-TCommand = TypeVar("TCommand")
-TResult = TypeVar("TResult")
+R = TypeVar("R")
+T = TypeVar("T")
 
 
-class IRequestHandler(Generic[TCommand, TResult], ABC):
+class IRequestHandler(ABC, Generic[R, T]):
     @abstractmethod
-    async def handle(self, command: TCommand) -> TResult:
+    async def handle(self, request: R) -> T:
         pass

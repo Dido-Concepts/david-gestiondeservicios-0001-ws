@@ -17,10 +17,12 @@ seed_initial_data = "scripts:seed_initial_data"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-fastapi = { extras = ["standard"], version = "^0.114.0" }
+fastapi = { extras = ["standard"], version = "^0.115.0" }
 sqlalchemy = "^2.0.34"
 psycopg2-binary = "^2.9.9"
 asyncpg = "^0.29.0"
+google-auth = "^2.35.0"
+requests = "^2.32.3"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -29,6 +31,7 @@ mypy = "^1.11.2"
 black = "^24.8.0"
 click = "^8.1.7"
 alembic = "^1.13.2"
+isort = "^5.13.2"
 
 
 [build-system]

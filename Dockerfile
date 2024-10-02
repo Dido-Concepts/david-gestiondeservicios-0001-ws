@@ -9,6 +9,4 @@ RUN pip install --no-cache-dir pip setuptools wheel
 
 RUN pip install --no-cache-dir app-0.1.0-py3-none-any.whl
 
-EXPOSE 8000
-
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0"]

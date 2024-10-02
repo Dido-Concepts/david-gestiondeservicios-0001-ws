@@ -1,8 +1,8 @@
 """chore: inital db user with models
 
-Revision ID: 51287008dbc4
-Revises: 585ae0dc9ba0
-Create Date: 2024-09-15 22:42:07.848279
+Revision ID: 599e7fe6fccd
+Revises: 
+Create Date: 2024-09-30 19:10:52.358279
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '51287008dbc4'
-down_revision: Union[str, None] = '585ae0dc9ba0'
+revision: str = '599e7fe6fccd'
+down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -30,16 +30,6 @@ def upgrade() -> None:
     sa.UniqueConstraint('name')
     )
     op.create_index(op.f('ix_accions_id'), 'accions', ['id'], unique=False)
-    op.create_table('pages',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(), nullable=False),
-    sa.Column('description', sa.String(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
-    )
-    op.create_index(op.f('ix_pages_id'), 'pages', ['id'], unique=False)
     op.create_table('roles',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
@@ -65,9 +55,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('role_id', sa.Integer(), nullable=False),
     sa.Column('accion_id', sa.Integer(), nullable=False),
-    sa.Column('page_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['accion_id'], ['accions.id'], ),
-    sa.ForeignKeyConstraint(['page_id'], ['pages.id'], ),
     sa.ForeignKeyConstraint(['role_id'], ['roles.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -95,8 +83,6 @@ def downgrade() -> None:
     op.drop_table('users')
     op.drop_index(op.f('ix_roles_id'), table_name='roles')
     op.drop_table('roles')
-    op.drop_index(op.f('ix_pages_id'), table_name='pages')
-    op.drop_table('pages')
     op.drop_index(op.f('ix_accions_id'), table_name='accions')
     op.drop_table('accions')
     # ### end Alembic commands ###

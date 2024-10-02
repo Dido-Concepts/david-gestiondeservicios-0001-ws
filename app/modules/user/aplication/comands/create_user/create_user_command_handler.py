@@ -1,8 +1,8 @@
 from app.modules.share.domain.handler.request_handler import IRequestHandler
-from app.modules.user.domain.repositories.user_repository import UserRepository
 from app.modules.user.aplication.comands.create_user.create_user_command import (
     CreateUserCommand,
 )
+from app.modules.user.domain.repositories.user_repository import UserRepository
 
 
 class CreateUserCommandHandler(IRequestHandler[CreateUserCommand, bool]):

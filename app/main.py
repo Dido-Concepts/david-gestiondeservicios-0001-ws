@@ -1,12 +1,24 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
-from app.constants import origins, prefix_v1
-from app.modules.user.presentation.routes.v1.routes_v1 import user_router
 
-app = FastAPI()
+from app.constants import origins, prefix_v1, tags_metadata
+from app.modules.auth.presentation.routes.v1.auth_v1_routes import auth_router
+from app.modules.share.infra.exception_handlers import (
+    generic_exception_handler,
+    runtime_error_handler,
+    value_error_handler,
+)
+from app.modules.user.presentation.routes.v1.role_v1_routes import role_router
+from app.modules.user.presentation.routes.v1.user_v1_routes import user_router
 
-# Configuración del middleware CORS
+app = FastAPI(title="Lima 21 API", openapi_tags=tags_metadata)
+
+
+app.add_exception_handler(ValueError, value_error_handler)
+app.add_exception_handler(RuntimeError, runtime_error_handler)
+app.add_exception_handler(Exception, generic_exception_handler)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -17,6 +29,8 @@ app.add_middleware(
 
 
 app.include_router(user_router, prefix=prefix_v1, tags=["User"])
+app.include_router(auth_router, prefix=prefix_v1, tags=["Auth"])
+app.include_router(role_router, prefix=prefix_v1, tags=["Role"])
 
 
 @app.get("/", include_in_schema=False)

@@ -1,5 +1,11 @@
 from dataclasses import dataclass
-from typing import List
+
+
+@dataclass
+class Role:
+    id: int
+    name: str
+    description: str
 
 
 @dataclass
@@ -10,22 +16,7 @@ class Action:
 
 
 @dataclass
-class Page:
+class RolePermission:
     id: int
-    name: str
-    description: str
-
-
-@dataclass
-class Permission:
-    id: int
+    role: Role
     action: Action
-    page: Page
-
-
-@dataclass
-class Role:
-    id: int
-    name: str
-    description: str
-    permissions: List[Permission]
