@@ -1,11 +1,10 @@
 import re
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, field_validator
 
 
 class EditUserCommand(BaseModel):
     user_name: str
-    email: EmailStr
     id_rol: int
     id_user: int
 
@@ -17,18 +16,11 @@ class EditUserCommand(BaseModel):
             )
         return value
 
-    @field_validator("email")
-    def validate_email_domain(cls, value: EmailStr) -> EmailStr:
-        if not value.endswith("@gmail.com"):
-            raise ValueError("El correo electrónico debe ser un Gmail (@gmail.com).")
-        return value
-
     model_config = {
         "json_schema_extra": {
             "examples": [
                 {
                     "user_name": "Juan Perez",
-                    "email": "example@gmail.com",
                     "id_rol": 1,
                     "id_user": 1,
                 }

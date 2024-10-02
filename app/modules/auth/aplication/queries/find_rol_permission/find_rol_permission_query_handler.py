@@ -1,5 +1,3 @@
-from aiocache import caches
-
 from app.modules.auth.aplication.queries.find_rol_permission.find_rol_permission_query import (
     FindRolPermissionQuery,
 )
@@ -19,30 +17,19 @@ class FindRolPermissionQueryHandler(
     ):
         self.user_repository = user_repository
         self.role_repository = role_repository
-        self.cache = caches.get("default")
 
     async def handle(
         self, query: FindRolPermissionQuery
     ) -> FindRolPermissionQueryResponse:
 
-        cached_permissions = await self.cache.get(f"permissions:{query.email}")
-
-        if cached_permissions:
-            return FindRolPermissionQueryResponse(
-                role=query.email, permissions=cached_permissions
-            )
-
-        res = await self.user_repository.find_user_by_email(email=query.email)
+        user = await self.user_repository.find_user_by_email(email=query.email)
 
         permissions_res = await self.role_repository.find_permissions_by_role_id(
-            role_id=res.role.id
+            role_id=user.role.id
         )
-
         permissions = [permission.action.name for permission in permissions_res]
 
-        await self.cache.set(f"permissions:{query.email}", permissions, ttl=600)
-
         return FindRolPermissionQueryResponse(
-            role=res.role.name,
+            role=user.role.name,
             permissions=permissions,
         )

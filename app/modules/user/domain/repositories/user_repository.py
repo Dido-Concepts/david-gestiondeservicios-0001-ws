@@ -17,9 +17,7 @@ class UserRepository(ABC):
         pass
 
     @abstractmethod
-    async def edit_user(
-        self, user_name: str, email: str, id_rol: int, id_user: int
-    ) -> bool:
+    async def edit_user(self, user_name: str, id_rol: int, id_user: int) -> bool:
         pass
 
     @abstractmethod

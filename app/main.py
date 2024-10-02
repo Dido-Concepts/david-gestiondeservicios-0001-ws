@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
-from app.config import configure_cache
 from app.constants import origins, prefix_v1, tags_metadata
 from app.modules.auth.presentation.routes.v1.auth_v1_routes import auth_router
 from app.modules.share.infra.exception_handlers import (
@@ -12,8 +11,6 @@ from app.modules.share.infra.exception_handlers import (
 )
 from app.modules.user.presentation.routes.v1.role_v1_routes import role_router
 from app.modules.user.presentation.routes.v1.user_v1_routes import user_router
-
-configure_cache()
 
 app = FastAPI(title="Lima 21 API", openapi_tags=tags_metadata)
 

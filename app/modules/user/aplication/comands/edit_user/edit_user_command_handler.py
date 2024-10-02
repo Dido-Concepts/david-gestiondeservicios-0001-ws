@@ -12,7 +12,6 @@ class EditUserCommandHandler(IRequestHandler[EditUserCommand, bool]):
     async def handle(self, command: EditUserCommand) -> bool:
         await self.user_repository.edit_user(
             user_name=command.user_name,
-            email=command.email,
             id_rol=command.id_rol,
             id_user=command.id_user,
         )

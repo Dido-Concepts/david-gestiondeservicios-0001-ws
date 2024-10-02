@@ -81,9 +81,7 @@ class UserImplementationRepository(UserRepository):
                 data=users, total_items=total_users, total_pages=total_pages
             )
 
-    async def edit_user(
-        self, user_name: str, email: str, id_rol: int, id_user: int
-    ) -> bool:
+    async def edit_user(self, user_name: str, id_rol: int, id_user: int) -> bool:
         async with self._uow as uow:
             session = uow.session
 
@@ -100,7 +98,6 @@ class UserImplementationRepository(UserRepository):
                 raise ValueError(f"Role with id {id_rol} does not exist")
 
             existing_user.user_name = user_name
-            existing_user.email = email
 
             existing_user_role = await session.scalar(
                 select(UserRoles).where(UserRoles.user_id == id_user)
