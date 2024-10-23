@@ -1,4 +1,5 @@
 from math import ceil
+from typing import Optional
 
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
@@ -45,7 +46,7 @@ class UserImplementationRepository(UserRepository):
             return True
 
     async def find_users(
-        self, page_index: int, page_size: int
+        self, page_index: int, page_size: int, query: Optional[str] = None
     ) -> ResponseList[UserRole]:
         if page_index < 1:
             raise ValueError("Invalid page index")
@@ -53,7 +54,13 @@ class UserImplementationRepository(UserRepository):
         async with self._uow as uow:
             session = uow.session
 
-            total_users = await session.scalar(select(func.count(Users.id))) or 0
+            total_users_stmt = select(func.count(Users.id))
+            if query:
+                total_users_stmt = total_users_stmt.filter(
+                    Users.user_name.ilike(f"%{query}%")
+                    | Users.email.ilike(f"%{query}%")
+                )
+            total_users = await session.scalar(total_users_stmt) or 0
             total_pages = max(ceil(total_users / page_size), 1)
             offset_value = page_size * (page_index - 1)
 
@@ -64,10 +71,18 @@ class UserImplementationRepository(UserRepository):
 
             smt = (
                 select(UserRoles)
+                .join(UserRoles.user)
+                .join(UserRoles.role)
                 .options(joinedload(UserRoles.user), joinedload(UserRoles.role))
                 .limit(page_size)
                 .offset(offset_value)
             )
+
+            if query:
+                smt = smt.filter(
+                    Users.user_name.ilike(f"%{query}%")
+                    | Users.email.ilike(f"%{query}%")
+                )
 
             result = await session.execute(smt)
             users_with_roles = result.scalars().all()
