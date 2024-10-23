@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 
 from app.modules.share.domain.repositories.repository_types import ResponseList
 from app.modules.user.domain.models.user_domain import UserRole
@@ -12,7 +13,7 @@ class UserRepository(ABC):
 
     @abstractmethod
     async def find_users(
-        self, page_index: int, page_size: int
+        self, page_index: int, page_size: int, query: Optional[str] = None
     ) -> ResponseList[UserRole]:
         pass
 

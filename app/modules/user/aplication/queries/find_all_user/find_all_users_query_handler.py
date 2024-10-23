@@ -27,7 +27,7 @@ class FindAllUsersQueryHandler(
         self, query: FindAllUsersQuery
     ) -> PaginatedItemsViewModel[FindAllUsersQueryResponse]:
         res = await self.user_repository.find_users(
-            page_index=query.page_index, page_size=query.page_size
+            page_index=query.page_index, page_size=query.page_size, query=query.query
         )
 
         response_data = [
