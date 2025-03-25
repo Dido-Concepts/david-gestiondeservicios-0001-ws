@@ -1,32 +1,29 @@
-from typing import List
-
 from fastapi import APIRouter, Depends
+from mediatr import Mediator
 
 from app.modules.auth.presentation.dependencies.auth_dependencies import (
     permission_required,
 )
-from app.modules.share.aplication.mediator.mediator import Mediator
-from app.modules.user.aplication.queries.find_all_role.find_all_role_query import (
+from app.modules.user.aplication.queries.find_all_role.find_all_role_query_handler import (
     FindAllRoleQuery,
-)
-from app.modules.user.aplication.queries.find_all_role.find_all_role_query_response import (
     FindAllRoleQueryResponse,
 )
-from app.modules.user.presentation.dependencies.role_dependencies import (
-    get_role_mediator,
-)
-
-role_router = APIRouter()
 
 
-@role_router.get(
-    "/role", dependencies=[Depends(permission_required("role:list_roles"))]
-)
-async def list_roles(
-    mediator: Mediator[FindAllRoleQuery, List[FindAllRoleQueryResponse]] = Depends(
-        get_role_mediator
-    )
-) -> List[FindAllRoleQueryResponse]:
+class RoleController:
+    def __init__(self, mediator: Mediator):
+        self.mediator = mediator
+        self.router = APIRouter()
+        self._add_routes()
 
-    result = await mediator.send(FindAllRoleQuery())
-    return result
+    def _add_routes(self) -> None:
+        self.router.get(
+            "/role", dependencies=[Depends(permission_required(roles=["admin"]))]
+        )(self.list_roles)
+
+    async def list_roles(self) -> list[FindAllRoleQueryResponse]:
+
+        result: list[FindAllRoleQueryResponse] = await self.mediator.send_async(
+            FindAllRoleQuery()
+        )
+        return result

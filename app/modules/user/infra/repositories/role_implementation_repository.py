@@ -3,6 +3,7 @@ from typing import List
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
 
+from app.constants import uow_var
 from app.modules.share.infra.persistence.unit_of_work import UnitOfWork
 from app.modules.user.domain.models.role_domain import Role, RolePermission
 from app.modules.user.domain.repositories.role_repository import RoleRepository
@@ -12,10 +13,16 @@ from app.modules.user.infra.migration.models import Permissions, Roles
 
 
 class RoleImplementationRepository(RoleRepository):
-    def __init__(self, uow: UnitOfWork):
-        self._uow = uow
+    def __init__(self) -> None:
         self._role_permission_mapper = RolePermissionMapper()
         self._role_mapper = RoleMapper()
+
+    @property
+    def _uow(self) -> UnitOfWork:
+        try:
+            return uow_var.get()
+        except LookupError:
+            raise RuntimeError("UnitOfWork no encontrado en el contexto")
 
     async def find_permissions_by_role_id(self, role_id: int) -> List[RolePermission]:
         async with self._uow as uow:

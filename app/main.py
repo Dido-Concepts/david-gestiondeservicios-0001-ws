@@ -1,36 +1,76 @@
-from fastapi import FastAPI
+from typing import Awaitable, Callable, Optional
+
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from injector import Injector
+from mediatr import Mediator
 
-from app.constants import origins, prefix_v1, tags_metadata
-from app.modules.auth.presentation.routes.v1.auth_v1_routes import auth_router
+from app.constants import injector_var, origins, prefix_v1, tags_metadata, uow_var
+from app.database import create_session
+from app.modules.auth.presentation.routes.v1.auth_v1_routes import AuthController
+from app.modules.location.presentation.routes.v1.location_v1_routes import (
+    LocationController,
+)
+from app.modules.share.infra.di_config import AppModule
 from app.modules.share.infra.exception_handlers import (
     generic_exception_handler,
     runtime_error_handler,
     value_error_handler,
 )
-from app.modules.user.presentation.routes.v1.role_v1_routes import role_router
-from app.modules.user.presentation.routes.v1.user_v1_routes import user_router
-
-app = FastAPI(title="Lima 21 API", openapi_tags=tags_metadata)
-
-
-app.add_exception_handler(ValueError, value_error_handler)
-app.add_exception_handler(RuntimeError, runtime_error_handler)
-app.add_exception_handler(Exception, generic_exception_handler)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+from app.modules.share.infra.persistence.unit_of_work import UnitOfWork
+from app.modules.user.presentation.routes.v1.role_v1_routes import RoleController
+from app.modules.user.presentation.routes.v1.user_v1_routes import UserController
 
 
-app.include_router(user_router, prefix=prefix_v1, tags=["User"])
-app.include_router(auth_router, prefix=prefix_v1, tags=["Auth"])
-app.include_router(role_router, prefix=prefix_v1, tags=["Role"])
+def create_app(mediator: Optional[Mediator] = None) -> FastAPI:
+    app = FastAPI(title="ALDONATE API", openapi_tags=tags_metadata)
+
+    app.add_exception_handler(ValueError, value_error_handler)
+    app.add_exception_handler(RuntimeError, runtime_error_handler)
+    app.add_exception_handler(Exception, generic_exception_handler)
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    if not mediator:
+        mediator = Mediator()
+
+    user_controller = UserController(mediator)
+    role_controller = RoleController(mediator)
+    location_controller = LocationController(mediator)
+    auth_controller = AuthController(mediator)
+
+    app.include_router(user_controller.router, prefix=prefix_v1, tags=["User"])
+    app.include_router(role_controller.router, prefix=prefix_v1, tags=["Role"])
+    app.include_router(auth_controller.router, prefix=prefix_v1, tags=["Auth"])
+    app.include_router(location_controller.router, prefix=prefix_v1, tags=["Location"])
+
+    return app
+
+
+app = create_app()
+
+
+@app.middleware("http")
+async def injector_and_uow_middleware(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    async with UnitOfWork(session_factory=create_session) as uow:
+        injector = Injector([AppModule()])
+        injector_token = injector_var.set(injector)
+        uow_token = uow_var.set(uow)
+        try:
+            response = await call_next(request)
+        finally:
+            injector_var.reset(injector_token)
+            uow_var.reset(uow_token)
+        return response
 
 
 @app.get("/", include_in_schema=False)

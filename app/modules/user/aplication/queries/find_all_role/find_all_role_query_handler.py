@@ -1,17 +1,32 @@
 from typing import List
 
+from mediatr import Mediator
+from pydantic import BaseModel
+
+from app.constants import injector_var
 from app.modules.share.domain.handler.request_handler import IRequestHandler
-from app.modules.user.aplication.queries.find_all_role.find_all_role_query_response import (
-    FindAllRoleQueryResponse,
-)
 from app.modules.user.domain.repositories.role_repository import RoleRepository
 
 
-class FindAllRoleHandler(IRequestHandler[None, List[FindAllRoleQueryResponse]]):
-    def __init__(self, role_repository: RoleRepository):
-        self.role_repository = role_repository
+class FindAllRoleQuery(BaseModel):
+    pass
 
-    async def handle(self, query: None) -> List[FindAllRoleQueryResponse]:
+
+class FindAllRoleQueryResponse(BaseModel):
+    id: int
+    name: str
+    description: str
+
+
+@Mediator.handler
+class FindAllRoleHandler(
+    IRequestHandler[FindAllRoleQuery, List[FindAllRoleQueryResponse]]
+):
+    def __init__(self) -> None:
+        injector = injector_var.get()
+        self.role_repository = injector.get(RoleRepository)  # type: ignore[type-abstract]
+
+    async def handle(self, query: FindAllRoleQuery) -> List[FindAllRoleQueryResponse]:
         res = await self.role_repository.find_all()
 
         response_data = [

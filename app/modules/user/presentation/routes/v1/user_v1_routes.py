@@ -1,75 +1,86 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from mediatr import Mediator
 
 from app.modules.auth.presentation.dependencies.auth_dependencies import (
     permission_required,
 )
-from app.modules.share.aplication.mediator.mediator import Mediator
 from app.modules.share.aplication.view_models.paginated_items_view_model import (
     PaginatedItemsViewModel,
 )
-from app.modules.user.aplication.comands.change_status_user.change_status_user_command import (
+from app.modules.user.aplication.comands.change_status_user.change_status_user_command_handler import (
     ChangeStatusUserCommand,
 )
-from app.modules.user.aplication.comands.create_user.create_user_command import (
+from app.modules.user.aplication.comands.create_user.create_user_command_handler import (
     CreateUserCommand,
 )
-from app.modules.user.aplication.comands.edit_user.edit_user_command import (
+from app.modules.user.aplication.comands.edit_user.edit_user_command_handler import (
     EditUserCommand,
 )
-from app.modules.user.aplication.queries.find_all_user.find_all_users_query import (
+from app.modules.user.aplication.queries.find_all_user.find_all_users_query_handler import (
     FindAllUsersQuery,
-)
-from app.modules.user.aplication.queries.find_all_user.find_all_users_query_response import (
     FindAllUsersQueryResponse,
-)
-from app.modules.user.presentation.dependencies.user_dependencies import (
-    get_user_mediator,
+    FindAllUsersRequest,
 )
 
-user_router = APIRouter()
 
+class UserController:
+    def __init__(self, mediator: Mediator):
+        self.mediator = mediator
+        self.router = APIRouter()
+        self._add_routes()
 
-@user_router.get(
-    "/user", dependencies=[Depends(permission_required("user:list_users"))]
-)
-async def list_users(
-    query_params: Annotated[FindAllUsersQuery, Query()],
-    mediator: Mediator[
-        FindAllUsersQuery, PaginatedItemsViewModel[FindAllUsersQueryResponse]
-    ] = Depends(get_user_mediator),
-) -> PaginatedItemsViewModel[FindAllUsersQueryResponse]:
-    result = await mediator.send(query_params)
-    return result
+    def _add_routes(self) -> None:
+        self.router.get(
+            "/user",
+            dependencies=[Depends(permission_required(roles=["admin"]))],
+        )(self.list_users)
 
+        self.router.post(
+            "/user",
+            dependencies=[Depends(permission_required(roles=["admin"]))],
+        )(self.create_user)
 
-@user_router.post(
-    "/user", dependencies=[Depends(permission_required("user:create_user"))]
-)
-async def create_user(
-    command: CreateUserCommand,
-    mediator: Mediator[CreateUserCommand, bool] = Depends(get_user_mediator),
-) -> bool:
-    result = await mediator.send(command)
-    return result
+        self.router.put(
+            "/user",
+            dependencies=[Depends(permission_required(roles=["admin"]))],
+        )(self.edit_user)
 
+        self.router.patch(
+            "/user",
+            dependencies=[Depends(permission_required(roles=["admin"]))],
+        )(self.edit_user)
 
-@user_router.put("/user", dependencies=[Depends(permission_required("user:edit_user"))])
-async def edit_user(
-    command: EditUserCommand,
-    mediator: Mediator[EditUserCommand, bool] = Depends(get_user_mediator),
-) -> bool:
-    result = await mediator.send(command)
-    return result
+    async def list_users(
+        self, query_params: Annotated[FindAllUsersRequest, Query()]
+    ) -> PaginatedItemsViewModel[FindAllUsersQueryResponse]:
+        try:
+            query = FindAllUsersQuery(query_params)
+            result: PaginatedItemsViewModel[FindAllUsersQueryResponse] = (
+                await self.mediator.send_async(query)
+            )
+            return result
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
+    async def create_user(
+        self,
+        command: CreateUserCommand,
+    ) -> bool:
+        result: bool = await self.mediator.send_async(command)
+        return result
 
-@user_router.patch(
-    "/user", dependencies=[Depends(permission_required("user:change_status_user"))]
-)
-async def change_status_user(
-    command: Annotated[ChangeStatusUserCommand, Query()],
-    mediator: Mediator[ChangeStatusUserCommand, bool] = Depends(get_user_mediator),
-) -> bool:
-    result = await mediator.send(command)
-    return result
+    async def edit_user(
+        self,
+        command: EditUserCommand,
+    ) -> bool:
+        result: bool = await self.mediator.send_async(command)
+        return result
+
+    async def change_status_user(
+        self,
+        command: Annotated[ChangeStatusUserCommand, Query()],
+    ) -> bool:
+        result: bool = await self.mediator.send_async(command)
+        return result

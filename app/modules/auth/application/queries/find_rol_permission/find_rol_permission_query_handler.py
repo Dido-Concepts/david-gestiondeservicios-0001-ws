@@ -1,22 +1,31 @@
-from app.modules.auth.aplication.queries.find_rol_permission.find_rol_permission_query import (
-    FindRolPermissionQuery,
-)
-from app.modules.auth.aplication.queries.find_rol_permission.find_rol_permission_query_response import (
-    FindRolPermissionQueryResponse,
-)
+from typing import Optional
+
+from mediatr import Mediator
+from pydantic import BaseModel
+
+from app.constants import injector_var
 from app.modules.share.domain.handler.request_handler import IRequestHandler
 from app.modules.user.domain.repositories.role_repository import RoleRepository
 from app.modules.user.domain.repositories.user_repository import UserRepository
 
 
+class FindRolPermissionQuery(BaseModel):
+    email: str
+
+
+class FindRolPermissionQueryResponse(BaseModel):
+    role: Optional[str] = None
+    permissions: Optional[list[str]] = None
+
+
+@Mediator.handler
 class FindRolPermissionQueryHandler(
     IRequestHandler[FindRolPermissionQuery, FindRolPermissionQueryResponse]
 ):
-    def __init__(
-        self, user_repository: UserRepository, role_repository: RoleRepository
-    ):
-        self.user_repository = user_repository
-        self.role_repository = role_repository
+    def __init__(self) -> None:
+        injector = injector_var.get()
+        self.user_repository = injector.get(UserRepository)  # type: ignore[type-abstract]
+        self.role_repository = injector.get(RoleRepository)  # type: ignore[type-abstract]
 
     async def handle(
         self, query: FindRolPermissionQuery

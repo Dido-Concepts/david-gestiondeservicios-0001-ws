@@ -1,10 +1,12 @@
 from math import ceil
 from typing import Optional
 
+from sqlalchemy import and_
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql import func
 
+from app.constants import uow_var
 from app.modules.share.domain.repositories.repository_types import ResponseList
 from app.modules.share.infra.persistence.unit_of_work import UnitOfWork
 from app.modules.user.domain.models.user_domain import UserRole
@@ -15,9 +17,15 @@ from app.modules.user.infra.migration.models import Roles, UserRoles, Users
 
 
 class UserImplementationRepository(UserRepository):
-    def __init__(self, uow: UnitOfWork):
-        self._uow = uow
+    def __init__(self) -> None:
         self._user_mapper = UserMapper()
+
+    @property
+    def _uow(self) -> UnitOfWork:
+        try:
+            return uow_var.get()
+        except LookupError:
+            raise RuntimeError("UnitOfWork no encontrado en el contexto")
 
     async def create_user(self, user_name: str, email: str, id_rol: int) -> bool:
         async with self._uow as uow:
@@ -148,7 +156,11 @@ class UserImplementationRepository(UserRepository):
 
             user_role = await session.scalar(
                 select(UserRoles)
-                .where(UserRoles.user.has(Users.email == email))
+                .where(
+                    UserRoles.user.has(
+                        and_(Users.email == email, Users.status == "ACTIVE")
+                    )
+                )
                 .options(joinedload(UserRoles.user), joinedload(UserRoles.role))
             )
 
