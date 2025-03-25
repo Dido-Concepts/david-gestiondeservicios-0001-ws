@@ -50,7 +50,7 @@ class UserController:
         self.router.patch(
             "/user",
             dependencies=[Depends(permission_required(roles=["admin"]))],
-        )(self.edit_user)
+        )(self.change_status_user)
 
     async def list_users(
         self, query_params: Annotated[FindAllUsersRequest, Query()]
