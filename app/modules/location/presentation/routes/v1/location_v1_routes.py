@@ -1,7 +1,7 @@
 import json
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, UploadFile
+from fastapi import APIRouter, Depends, Form, Query, UploadFile
 from mediatr import Mediator
 
 from app.modules.auth.domain.models.user_auth_domain import UserAuth
@@ -11,6 +11,13 @@ from app.modules.auth.presentation.dependencies.auth_dependencies import (
 )
 from app.modules.location.application.commands.create_location.create_location_command_handler import (
     CreateLocationCommand,
+)
+from app.modules.location.application.queries.get_locations.get_locations_handler import (
+    FindAllLocationQuery,
+    FindAllLocationQueryResponse,
+)
+from app.modules.share.aplication.view_models.paginated_items_view_model import (
+    PaginatedItemsViewModel,
 )
 
 
@@ -70,6 +77,11 @@ class LocationController:
             },
         )(self.create_location)
 
+        self.router.get(
+            "/locations",
+            dependencies=[Depends(permission_required(roles=["admin"]))],
+        )(self.get_locations)
+
     async def create_location(
         self,
         name_location: Annotated[str, Form()],
@@ -93,4 +105,13 @@ class LocationController:
         )
 
         result: int = await self.mediator.send_async(command)
+        return result
+
+    async def get_locations(
+        self, query_params: Annotated[FindAllLocationQuery, Query()]
+    ) -> PaginatedItemsViewModel[FindAllLocationQueryResponse]:
+
+        result: PaginatedItemsViewModel[FindAllLocationQueryResponse] = (
+            await self.mediator.send_async(query_params)
+        )
         return result
