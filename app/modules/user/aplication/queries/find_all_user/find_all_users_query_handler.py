@@ -1,33 +1,53 @@
+from datetime import datetime
+
+from mediatr import Mediator
+from pydantic import BaseModel, Field
+
+from app.constants import injector_var
 from app.modules.share.aplication.view_models.paginated_items_view_model import (
     MetaPaginatedItemsViewModel,
     PaginatedItemsViewModel,
 )
-from app.modules.share.domain.handler.request_handler import IRequestHandler
-from app.modules.user.aplication.queries.find_all_role.find_all_role_query_response import (
+from app.modules.user.aplication.queries.find_all_role.find_all_role_query_handler import (
     FindAllRoleQueryResponse,
 )
-from app.modules.user.aplication.queries.find_all_user.find_all_users_query import (
-    FindAllUsersQuery,
-)
-from app.modules.user.aplication.queries.find_all_user.find_all_users_query_response import (
-    FindAllUsersQueryResponse,
-)
+from app.modules.user.domain.models.user_enum import Status
 from app.modules.user.domain.repositories.user_repository import UserRepository
 
 
-class FindAllUsersQueryHandler(
-    IRequestHandler[
-        FindAllUsersQuery, PaginatedItemsViewModel[FindAllUsersQueryResponse]
-    ]
-):
-    def __init__(self, user_repository: UserRepository):
-        self.user_repository = user_repository
+class FindAllUsersRequest(BaseModel):
+    page_index: int = Field(1, ge=1)
+    page_size: int = Field(10, ge=1)
+    query: str = Field(None, min_length=1)
+
+
+class FindAllUsersQuery:
+    def __init__(self, request: FindAllUsersRequest):
+        self.request = request
+
+
+class FindAllUsersQueryResponse(BaseModel):
+    id: int
+    user_name: str
+    email: str
+    status: Status
+    role: FindAllRoleQueryResponse
+    created_at: datetime
+
+
+@Mediator.handler
+class FindAllUsersQueryHandler:
+    def __init__(self) -> None:
+        injector = injector_var.get()
+        self.user_repository = injector.get(UserRepository)  # type: ignore[type-abstract]
 
     async def handle(
         self, query: FindAllUsersQuery
     ) -> PaginatedItemsViewModel[FindAllUsersQueryResponse]:
         res = await self.user_repository.find_users(
-            page_index=query.page_index, page_size=query.page_size, query=query.query
+            page_index=query.request.page_index,
+            page_size=query.request.page_size,
+            query=query.request.query,
         )
 
         response_data = [
@@ -47,8 +67,8 @@ class FindAllUsersQueryHandler(
         ]
 
         meta = MetaPaginatedItemsViewModel(
-            page=query.page_index,
-            page_size=query.page_size,
+            page=query.request.page_index,
+            page_size=query.request.page_size,
             page_count=res.total_pages,
             total=res.total_items,
         )

@@ -1,32 +1,35 @@
 from fastapi import APIRouter, Depends
+from mediatr import Mediator
 
-from app.modules.auth.aplication.queries.find_rol_permission.find_rol_permission_query import (
+from app.modules.auth.application.queries.find_rol_permission.find_rol_permission_query_handler import (
     FindRolPermissionQuery,
-)
-from app.modules.auth.aplication.queries.find_rol_permission.find_rol_permission_query_response import (
     FindRolPermissionQueryResponse,
 )
 from app.modules.auth.domain.models.user_auth_domain import UserAuth
 from app.modules.auth.presentation.dependencies.auth_dependencies import (
-    get_auth_mediator,
     get_current_user,
 )
-from app.modules.share.aplication.mediator.mediator import Mediator
-
-auth_router = APIRouter()
 
 
-@auth_router.get("/get-user-info")
-async def get_user_info(
-    user_info: UserAuth = Depends(get_current_user),
-    mediator: Mediator[
-        FindRolPermissionQuery, FindRolPermissionQueryResponse
-    ] = Depends(get_auth_mediator),
-) -> FindRolPermissionQueryResponse:
+class AuthController:
+    def __init__(self, mediator: Mediator):
+        self.mediator = mediator
+        self.router = APIRouter()
+        self._add_routes()
 
-    if not user_info.email:
-        raise ValueError("User email not found in token")
+    def _add_routes(self) -> None:
+        self.router.get("/get-user-info")(self.get_user_info)
 
-    result = await mediator.send(request=FindRolPermissionQuery(email=user_info.email))
+    async def get_user_info(
+        self,
+        user_info: UserAuth = Depends(get_current_user),
+    ) -> FindRolPermissionQueryResponse:
 
-    return result
+        if not user_info.email:
+            raise ValueError("User email not found in token")
+
+        result: FindRolPermissionQueryResponse = await self.mediator.send_async(
+            FindRolPermissionQuery(email=user_info.email)
+        )
+
+        return result
