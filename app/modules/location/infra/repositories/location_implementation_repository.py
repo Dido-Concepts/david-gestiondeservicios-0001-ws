@@ -1,12 +1,15 @@
 import json
+from datetime import datetime
 
 from sqlalchemy import text
 
 from app.constants import uow_var
+from app.modules.location.domain.entities.location_domain import LocationResponse
 from app.modules.location.domain.entities.location_request import Schedule
 from app.modules.location.domain.repositories.location_repository import (
     LocationRepository,
 )
+from app.modules.share.domain.repositories.repository_types import ResponseList
 from app.modules.share.infra.persistence.unit_of_work import UnitOfWork
 
 
@@ -60,3 +63,41 @@ class LocationImplementationRepository(LocationRepository):
 
         sede_id: int = result.scalar_one()
         return sede_id
+
+    async def find_locations(
+        self, page_index: int, page_size: int
+    ) -> ResponseList[LocationResponse]:
+
+        stmt = text("SELECT get_sedes(:page_index, :page_size)")
+
+        result = await self._uow.session.execute(
+            stmt,
+            {
+                "page_index": page_index,
+                "page_size": page_size,
+            },
+        )
+
+        data_dict = result.scalar_one()
+
+        locations_list = [
+            LocationResponse(
+                id=item["id"],
+                nombre_sede=item["nombre_sede"],
+                telefono_sede=item["telefono_sede"],
+                direccion_sede=item["direccion_sede"],
+                insert_date=datetime.fromisoformat(item["insert_date"]),
+                url=item.get("url"),
+                filename=item.get("filename"),
+                content_type=item.get("content_type"),
+                size=item.get("size"),
+            )
+            for item in data_dict["data"]
+        ]
+
+        response = ResponseList(
+            data=locations_list,
+            total_items=data_dict["total_items"],
+            total_pages=data_dict["total_pages"],
+        )
+        return response
