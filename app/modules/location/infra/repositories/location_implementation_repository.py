@@ -1,14 +1,21 @@
 import json
 from datetime import datetime
+from typing import Optional
 
+from fastapi import HTTPException
 from sqlalchemy import text
 
 from app.constants import uow_var
-from app.modules.location.domain.entities.location_domain import LocationResponse
-from app.modules.location.domain.entities.location_request import Schedule
+from app.modules.location.domain.entities.location_domain import (
+    LocationInfoResponse,
+    LocationResponse,
+    ScheduleRequestDomain,
+    ScheduleResponse,
+)
 from app.modules.location.domain.repositories.location_repository import (
     LocationRepository,
 )
+from app.modules.share.domain.file.file_domain import FileResponse
 from app.modules.share.domain.repositories.repository_types import ResponseList
 from app.modules.share.infra.persistence.unit_of_work import UnitOfWork
 
@@ -31,19 +38,19 @@ class LocationImplementationRepository(LocationRepository):
         file_name: str,
         file_content_type: str,
         file_size: int,
-        schedule: list[Schedule],
+        schedule: list[ScheduleRequestDomain],
         user_create: str,
+        location_review: Optional[str] = None,
     ) -> int:
 
         schedule_list = [
-            {"dia": s.day.value, "inicio": s.start_time, "fin": s.end_time}
-            for s in schedule
+            {"dia": s.dia.value, "inicio": s.inicio, "fin": s.fin} for s in schedule
         ]
 
         horarios_json = json.dumps(schedule_list)
 
         stmt = text(
-            "SELECT crear_sede(:nombre, :phone, :address,:url, :file_name,:content_type,:file_size, CAST(:horarios AS JSONB), :user_create)"
+            "SELECT crear_sede(:nombre, :phone, :address,:url, :file_name,:content_type,:file_size, CAST(:horarios AS JSONB), :user_create, :location_review)"
         )
 
         result = await self._uow.session.execute(
@@ -58,6 +65,7 @@ class LocationImplementationRepository(LocationRepository):
                 "file_size": file_size,
                 "horarios": horarios_json,
                 "user_create": user_create,
+                "location_review": location_review,
             },
         )
 
@@ -87,7 +95,9 @@ class LocationImplementationRepository(LocationRepository):
                 telefono_sede=item["telefono_sede"],
                 direccion_sede=item["direccion_sede"],
                 insert_date=datetime.fromisoformat(item["insert_date"]),
+                location_review=item["review_location"],
                 url=item.get("url"),
+                annulled=item["annulled"],
                 filename=item.get("filename"),
                 content_type=item.get("content_type"),
                 size=item.get("size"),
@@ -100,4 +110,47 @@ class LocationImplementationRepository(LocationRepository):
             total_items=data_dict["total_items"],
             total_pages=data_dict["total_pages"],
         )
+        return response
+
+    async def find_location_by_id(self, location_id: int) -> LocationInfoResponse:
+
+        stmt = text("SELECT get_sede_info(:location_id)")
+
+        result = await self._uow.session.execute(
+            stmt,
+            {"location_id": location_id},
+        )
+
+        data_dict = result.scalar_one()
+
+        if data_dict is None:
+            raise HTTPException(
+                status_code=404, detail="No se encontró la sede en la base de datos"
+            )
+
+        response = LocationInfoResponse(
+            id=data_dict["id"],
+            nombre_sede=data_dict["nombre_sede"],
+            telefono_sede=data_dict["telefono_sede"],
+            direccion_sede=data_dict["direccion_sede"],
+            location_review=data_dict["location_review"],
+            insert_date=datetime.fromisoformat(data_dict["insert_date"]),
+            file=FileResponse(
+                id=data_dict["file"]["id_file"],
+                url=data_dict["file"]["url"],
+                filename=data_dict["file"]["filename"],
+                content_type=data_dict["file"]["content_type"],
+                size=data_dict["file"]["size"],
+            ),
+            schedules=[
+                ScheduleResponse(
+                    id=item["id_horario"],
+                    dia=item["dia"],
+                    inicio=item["inicio"],
+                    fin=item["fin"],
+                )
+                for item in data_dict["horarios"]
+            ],
+        )
+
         return response

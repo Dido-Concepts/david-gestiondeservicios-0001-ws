@@ -3,6 +3,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
+from app.modules.share.domain.file.file_domain import FileResponse
+
 
 class DayOfWeek(Enum):
     LUNES = "Lunes"
@@ -15,13 +17,42 @@ class DayOfWeek(Enum):
 
 
 @dataclass
+class ScheduleRequestDomain:
+    dia: DayOfWeek
+    inicio: str
+    fin: str
+
+
+@dataclass
 class LocationResponse:
     id: int
     nombre_sede: str
     telefono_sede: str
     direccion_sede: str
     insert_date: datetime
+    location_review: str
+    annulled: bool
     url: Optional[str] = None
     filename: Optional[str] = None
     content_type: Optional[str] = None
     size: Optional[int] = None
+
+
+@dataclass
+class ScheduleResponse:
+    id: int
+    dia: DayOfWeek
+    inicio: str
+    fin: str
+
+
+@dataclass
+class LocationInfoResponse:
+    id: int
+    nombre_sede: str
+    telefono_sede: str
+    direccion_sede: str
+    location_review: str
+    insert_date: datetime
+    file: FileResponse
+    schedules: list[ScheduleResponse]

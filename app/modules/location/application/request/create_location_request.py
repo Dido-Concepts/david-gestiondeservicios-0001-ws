@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, ValidationInfo, field_validator
 
@@ -33,6 +34,7 @@ class CreateLocationRequest(BaseModel):
     name_location: str
     phone: str
     address: str
+    location_review: Optional[str] = None
     schedule: list[ScheduleRequest]
 
     @field_validator("name_location")
@@ -54,5 +56,13 @@ class CreateLocationRequest(BaseModel):
         if not re.match(r"^[A-Za-z0-9 .#]+$", v):
             raise ValueError(
                 "address solo debe contener letras, números, espacios, '.', o '#'"
+            )
+        return v
+
+    @field_validator("location_review")
+    def validate_location_review(cls, v: Optional[str]) -> Optional[str]:
+        if v and not re.match(r"^[A-Za-z0-9 .,#]+$", v):
+            raise ValueError(
+                "location_review solo debe contener letras, números, espacios, ',', '#' o '.'"
             )
         return v
