@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 
-from app.modules.location.domain.entities.location_domain import LocationResponse
-from app.modules.location.domain.entities.location_request import Schedule
+from app.modules.location.domain.entities.location_domain import (
+    LocationInfoResponse,
+    LocationResponse,
+    ScheduleRequestDomain,
+)
 from app.modules.share.domain.repositories.repository_types import ResponseList
 
 
@@ -17,8 +21,9 @@ class LocationRepository(ABC):
         file_name: str,
         file_content_type: str,
         file_size: int,
-        schedule: list[Schedule],
+        schedule: list[ScheduleRequestDomain],
         user_create: str,
+        location_review: Optional[str] = None,
     ) -> int:
         pass
 
@@ -26,4 +31,8 @@ class LocationRepository(ABC):
     async def find_locations(
         self, page_index: int, page_size: int
     ) -> ResponseList[LocationResponse]:
+        pass
+
+    @abstractmethod
+    async def find_location_by_id(self, location_id: int) -> LocationInfoResponse:
         pass

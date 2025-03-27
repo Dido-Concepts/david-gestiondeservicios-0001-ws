@@ -25,6 +25,7 @@ class FindAllLocationQueryResponse(BaseModel):
     name_location: str
     phone_location: str
     address_location: str
+    location_review: str
     insert_date: datetime
     url: Optional[str] = None
     filename: Optional[str] = None
@@ -58,6 +59,7 @@ class FindAllLocationQueryHandler(
                 phone_location=location.telefono_sede,
                 address_location=location.direccion_sede,
                 insert_date=location.insert_date,
+                location_review=location.location_review,
                 url=location.url,
                 filename=location.filename,
                 content_type=location.content_type,

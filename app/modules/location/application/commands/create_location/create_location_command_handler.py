@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 from fastapi import UploadFile
 from mediatr import Mediator
@@ -8,7 +9,7 @@ from app.modules.location.application.request.create_location_request import (
     CreateLocationRequest,
     ScheduleRequest,
 )
-from app.modules.location.domain.entities.location_request import Schedule
+from app.modules.location.domain.entities.location_domain import ScheduleRequestDomain
 from app.modules.location.domain.repositories.location_repository import (
     LocationRepository,
 )
@@ -25,6 +26,7 @@ class CreateLocationCommand:
     img_file: UploadFile
     schedule: str
     user_create: str
+    location_review: Optional[str] = None
 
 
 @Mediator.handler
@@ -50,10 +52,11 @@ class CreateLocationCommandHandler(IRequestHandler[CreateLocationCommand, int]):
             phone=command.phone,
             name_location=command.name_location,
             schedule=schedule_list,
+            location_review=command.location_review,
         )
 
         schedule_list_request = [
-            Schedule(day=s.day, start_time=s.start_time, end_time=s.end_time)
+            ScheduleRequestDomain(dia=s.day, inicio=s.start_time, fin=s.end_time)
             for s in location_request.schedule
         ]
 
@@ -67,6 +70,7 @@ class CreateLocationCommandHandler(IRequestHandler[CreateLocationCommand, int]):
             file_size=img.size,
             schedule=schedule_list_request,
             user_create=command.user_create,
+            location_review=location_request.location_review,
         )
 
         return id_location
