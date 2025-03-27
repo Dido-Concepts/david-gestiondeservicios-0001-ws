@@ -1,7 +1,7 @@
 import json
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, Form, Query, UploadFile
+from fastapi import APIRouter, Depends, Form, Path, Query, UploadFile
 from mediatr import Mediator
 
 from app.modules.auth.domain.models.user_auth_domain import UserAuth
@@ -91,7 +91,7 @@ class LocationController:
         )(self.get_locations)
 
         self.router.get(
-            "/location/{id}",
+            "/location/{id_location}",
             dependencies=[Depends(permission_required(roles=["admin"]))],
         )(self.get_location_info_id)
 
@@ -132,7 +132,7 @@ class LocationController:
         return result
 
     async def get_location_info_id(
-        self, query_param: Annotated[GetLocationByIdQuery, Query()]
+        self, query_param: Annotated[GetLocationByIdQuery, Path()]
     ) -> GetLocationByIdResponse:
         result: GetLocationByIdResponse = await self.mediator.send_async(query_param)
         return result
