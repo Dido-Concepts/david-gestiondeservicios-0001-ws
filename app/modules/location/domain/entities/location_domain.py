@@ -17,10 +17,15 @@ class DayOfWeek(Enum):
 
 
 @dataclass
+class ScheduleRangeDomain:
+    start: str
+    end: str
+
+
+@dataclass
 class ScheduleRequestDomain:
-    dia: DayOfWeek
-    inicio: str
-    fin: str
+    day: DayOfWeek
+    ranges: list[ScheduleRangeDomain]
 
 
 @dataclass
@@ -39,14 +44,6 @@ class LocationResponse:
 
 
 @dataclass
-class ScheduleResponse:
-    id: int
-    dia: DayOfWeek
-    inicio: str
-    fin: str
-
-
-@dataclass
 class LocationInfoResponse:
     id: int
     nombre_sede: str
@@ -55,4 +52,4 @@ class LocationInfoResponse:
     location_review: str
     insert_date: datetime
     file: FileResponse
-    schedules: list[ScheduleResponse]
+    schedules: list[ScheduleRequestDomain]

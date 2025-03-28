@@ -9,7 +9,10 @@ from app.modules.location.application.request.create_location_request import (
     CreateLocationRequest,
     ScheduleRequest,
 )
-from app.modules.location.domain.entities.location_domain import ScheduleRequestDomain
+from app.modules.location.domain.entities.location_domain import (
+    ScheduleRangeDomain,
+    ScheduleRequestDomain,
+)
 from app.modules.location.domain.repositories.location_repository import (
     LocationRepository,
 )
@@ -56,8 +59,13 @@ class CreateLocationCommandHandler(IRequestHandler[CreateLocationCommand, int]):
         )
 
         schedule_list_request = [
-            ScheduleRequestDomain(dia=s.day, inicio=s.start_time, fin=s.end_time)
-            for s in location_request.schedule
+            ScheduleRequestDomain(
+                day=s.day,
+                ranges=[
+                    ScheduleRangeDomain(start=r.start, end=r.end) for r in s.ranges
+                ],
+            )
+            for s in schedule_list
         ]
 
         id_location = await self.location_repository.create_Location(

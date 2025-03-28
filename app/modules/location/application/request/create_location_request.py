@@ -7,13 +7,12 @@ from pydantic import BaseModel, ValidationInfo, field_validator
 from app.modules.location.domain.entities.location_domain import DayOfWeek
 
 
-class ScheduleRequest(BaseModel):
-    day: DayOfWeek
-    start_time: str
-    end_time: str
+class ScheduleRange(BaseModel):
+    start: str
+    end: str
 
-    @field_validator("start_time", "end_time")
-    def check_time_format(cls, v: str, info: ValidationInfo) -> str:
+    @field_validator("start", "end")
+    def check_time_format(cls, v: str) -> str:
         """Valida que el formato sea HH:MM."""
         try:
             datetime.strptime(v, "%H:%M")
@@ -21,13 +20,18 @@ class ScheduleRequest(BaseModel):
             raise ValueError("Formato de tiempo inválido, se espera HH:MM")
         return v
 
-    @field_validator("end_time")
+    @field_validator("end")
     def check_end_after_start(cls, v: str, info: ValidationInfo) -> str:
-        """Valida que end_time sea posterior a start_time."""
-        start_time = info.data.get("start_time")
-        if start_time and v <= start_time:
-            raise ValueError("end_time debe ser posterior a start_time")
+        """Valida que fin sea posterior a inicio."""
+        inicio = info.data.get("start")
+        if inicio and v <= inicio:
+            raise ValueError("end debe ser posterior a start")
         return v
+
+
+class ScheduleRequest(BaseModel):
+    day: DayOfWeek
+    ranges: list[ScheduleRange]
 
 
 class CreateLocationRequest(BaseModel):
@@ -39,7 +43,7 @@ class CreateLocationRequest(BaseModel):
 
     @field_validator("name_location")
     def validate_name_location(cls, v: str) -> str:
-        if not re.match(r"^[A-Za-z0-9 ]+$", v):
+        if not re.match(r"^[A-ZÁÉÍÓÚÜÑáéíóúüña-z0-9 ]+$", v):
             raise ValueError("name_location no debe contener caracteres especiales")
         return v
 
@@ -53,7 +57,7 @@ class CreateLocationRequest(BaseModel):
 
     @field_validator("address")
     def validate_address(cls, v: str) -> str:
-        if not re.match(r"^[A-Za-z0-9 .#]+$", v):
+        if not re.match(r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .#]+$", v):
             raise ValueError(
                 "address solo debe contener letras, números, espacios, '.', o '#'"
             )
@@ -61,7 +65,7 @@ class CreateLocationRequest(BaseModel):
 
     @field_validator("location_review")
     def validate_location_review(cls, v: Optional[str]) -> Optional[str]:
-        if v and not re.match(r"^[A-Za-z0-9 .,#]+$", v):
+        if v and not re.match(r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .,#]+$", v):
             raise ValueError(
                 "location_review solo debe contener letras, números, espacios, ',', '#' o '.'"
             )

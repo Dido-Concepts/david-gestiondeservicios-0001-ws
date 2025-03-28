@@ -16,11 +16,14 @@ class GetLocationByIdQuery(BaseModel):
     id_location: int = Field(1, ge=1)
 
 
+class ScheduleRange(BaseModel):
+    start: str
+    end: str
+
+
 class ScheduleResponse(BaseModel):
-    id: int
     day: DayOfWeek
-    start_time: str
-    end_time: str
+    ranges: list[ScheduleRange]
 
 
 class GetLocationByIdResponse(BaseModel):
@@ -58,7 +61,8 @@ class GetLocationByIdQueryHandler(
             file=res.file,
             schedules=[
                 ScheduleResponse(
-                    id=s.id, day=s.dia, start_time=s.inicio, end_time=s.fin
+                    day=DayOfWeek(s.day),
+                    ranges=[ScheduleRange(start=r.start, end=r.end) for r in s.ranges],
                 )
                 for s in res.schedules
             ],
