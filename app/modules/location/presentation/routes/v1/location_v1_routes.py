@@ -61,14 +61,19 @@ class LocationController:
                                             [
                                                 {
                                                     "day": "Lunes",
-                                                    "start_time": "09:00",
-                                                    "end_time": "10:00",
+                                                    "ranges": [
+                                                        {
+                                                            "start": "09:00",
+                                                            "end": "19:00",
+                                                        }
+                                                    ],
                                                 },
-                                                {
-                                                    "day": "Martes",
-                                                    "start_time": "10:00",
-                                                    "end_time": "11:00",
-                                                },
+                                                {"day": "Martes", "ranges": []},
+                                                {"day": "Miercoles", "ranges": []},
+                                                {"day": "Jueves", "ranges": []},
+                                                {"day": "Viernes", "ranges": []},
+                                                {"day": "Sabado", "ranges": []},
+                                                {"day": "Domingo", "ranges": []},
                                             ]
                                         ),
                                     },
