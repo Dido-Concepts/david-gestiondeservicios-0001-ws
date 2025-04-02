@@ -36,3 +36,7 @@ class LocationRepository(ABC):
     @abstractmethod
     async def find_location_by_id(self, location_id: int) -> LocationInfoResponse:
         pass
+
+    @abstractmethod
+    async def change_status_location(self, location_id: int, user_update: str) -> str:
+        pass

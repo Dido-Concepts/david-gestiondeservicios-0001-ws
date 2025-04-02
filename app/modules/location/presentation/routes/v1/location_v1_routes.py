@@ -9,6 +9,9 @@ from app.modules.auth.presentation.dependencies.auth_dependencies import (
     get_current_user,
     permission_required,
 )
+from app.modules.location.application.commands.change_status_location.change_status_location_command_handler import (
+    ChangeStatusLocationCommand,
+)
 from app.modules.location.application.commands.create_location.create_location_command_handler import (
     CreateLocationCommand,
 )
@@ -100,6 +103,11 @@ class LocationController:
             dependencies=[Depends(permission_required(roles=["admin"]))],
         )(self.get_location_info_id)
 
+        self.router.put(
+            "/location/{id_location}/status",
+            dependencies=[Depends(permission_required(roles=["admin"]))],
+        )(self.change_status_location)
+
     async def create_location(
         self,
         name_location: Annotated[str, Form()],
@@ -140,4 +148,19 @@ class LocationController:
         self, query_param: Annotated[GetLocationByIdQuery, Path()]
     ) -> GetLocationByIdResponse:
         result: GetLocationByIdResponse = await self.mediator.send_async(query_param)
+        return result
+
+    async def change_status_location(
+        self,
+        id_location: Annotated[int, Path()],
+        current_user: UserAuth = Depends(get_current_user),
+    ) -> str:
+        if not current_user.email:
+            raise ValueError("User email not found in token")
+
+        command = ChangeStatusLocationCommand(
+            id_location=id_location, user_updated=current_user.email
+        )
+
+        result: str = await self.mediator.send_async(command)
         return result

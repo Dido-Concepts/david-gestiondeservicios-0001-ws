@@ -175,3 +175,29 @@ class LocationImplementationRepository(LocationRepository):
         )
 
         return response
+
+    async def change_status_location(self, location_id: int, user_update: str) -> str:
+
+        stmt = text("SELECT change_status_location(:location_id, :user_update)")
+
+        try:
+            result = await self._uow.session.execute(
+                stmt,
+                {
+                    "location_id": location_id,
+                    "user_update": user_update,
+                },
+            )
+
+            response: str = result.scalar_one()
+
+            if response is None:
+                raise HTTPException(
+                    status_code=404, detail="No se encontró la sede en la base de datos"
+                )
+
+            return response
+
+        except DBAPIError as e:
+            handle_error(e)
+            raise RuntimeError("Este punto nunca se alcanza")
