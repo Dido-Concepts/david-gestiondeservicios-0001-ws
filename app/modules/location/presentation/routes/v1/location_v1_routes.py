@@ -15,8 +15,12 @@ from app.modules.location.application.commands.change_status_location.change_sta
 from app.modules.location.application.commands.create_location.create_location_command_handler import (
     CreateLocationCommand,
 )
-from app.modules.location.application.commands.update_location.update_location_command_handler import UpdateLocationCommand
-from app.modules.location.application.commands.update_schedule_location.update_schedule_location_command_handler import UpdateScheduleLocationCommand
+from app.modules.location.application.commands.update_location.update_location_command_handler import (
+    UpdateLocationCommand,
+)
+from app.modules.location.application.commands.update_schedule_location.update_schedule_location_command_handler import (
+    UpdateScheduleLocationCommand,
+)
 from app.modules.location.application.queries.get_location_by_id.get_location_by_id_handler import (
     GetLocationByIdQuery,
     GetLocationByIdResponse,
@@ -29,21 +33,23 @@ from app.modules.share.aplication.view_models.paginated_items_view_model import 
     PaginatedItemsViewModel,
 )
 
-schedule_example_json = json.dumps([
-    {"day": "Lunes", "ranges": [{"start": "09:00", "end": "19:00"}]},
-    {"day": "Martes", "ranges": []},
-    {"day": "Miercoles", "ranges": []},
-    {"day": "Jueves", "ranges": []},
-    {"day": "Viernes", "ranges": []},
-    {"day": "Sabado", "ranges": []},
-    {"day": "Domingo", "ranges": []},
-])
+schedule_example_json = json.dumps(
+    [
+        {"day": "Lunes", "ranges": [{"start": "09:00", "end": "19:00"}]},
+        {"day": "Martes", "ranges": []},
+        {"day": "Miercoles", "ranges": []},
+        {"day": "Jueves", "ranges": []},
+        {"day": "Viernes", "ranges": []},
+        {"day": "Sabado", "ranges": []},
+        {"day": "Domingo", "ranges": []},
+    ]
+)
 
 schedule_property_schema = {
     "schedule": {
         "type": "string",
         "description": "Horario semanal en formato de cadena JSON.",
-        "example": schedule_example_json
+        "example": schedule_example_json,
     }
 }
 
@@ -80,7 +86,7 @@ class LocationController:
                                     },
                                     "schedule": {
                                         "type": "string",
-                                        "example": schedule_example_json
+                                        "example": schedule_example_json,
                                     },
                                     "img_file": {
                                         "type": "string",
@@ -119,7 +125,26 @@ class LocationController:
                         "multipart/form-data": {
                             "schema": {
                                 "type": "object",
-                                "properties": schedule_property_schema
+                                "properties": {
+                                    "name_location": {
+                                        "type": "string",
+                                        "example": "Mi Ubicacion 123",
+                                    },
+                                    "phone": {"type": "string", "example": "942404311"},
+                                    "address": {
+                                        "type": "string",
+                                        "example": "Calle Principal 123 #45",
+                                    },
+                                    "location_review": {
+                                        "type": "string",
+                                        "example": "Reseñas de la ubicacion",
+                                    },
+                                    "img_file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "example": "Archivo de imagen (ej. imagen.jpg)",
+                                    },
+                                },
                             }
                         }
                     }
@@ -138,17 +163,17 @@ class LocationController:
                             "schema": {
                                 "type": "object",
                                 "properties": schedule_property_schema,
-                                "required": ["schedule"]
+                                "required": ["schedule"],
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
                                 "type": "object",
                                 "properties": schedule_property_schema,
-                                "required": ["schedule"]
+                                "required": ["schedule"],
                             }
-                        }
-                    }
+                        },
+                    },
                 }
             },
         )(self.change_schedule_location)
@@ -212,7 +237,7 @@ class LocationController:
 
     async def change_details_location(
         self,
-        id_location: Annotated[int , Path(ge=1, example="1")],
+        id_location: Annotated[int, Path(ge=1, example="1")],
         name_location: Annotated[str, Form()],
         phone: Annotated[str, Form()],
         address: Annotated[str, Form()],
