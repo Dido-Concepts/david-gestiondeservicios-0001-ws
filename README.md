@@ -1,3 +1,10 @@
+INSTRUCCIONES PARA EL DESARROLLO
+
+ - Hacer bun i 
+ para instalar los paquetes necesarios para el correcto desarrollo de la aplicación
+
+
+
 INSTRUCCIONES DE DESPLIEGUE EN RAILWAY
 
 Este documento contiene los pasos necesarios para desplegar la aplicación en Railway y gestionar el repositorio correctamente.
