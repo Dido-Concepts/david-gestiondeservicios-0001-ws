@@ -40,3 +40,28 @@ class LocationRepository(ABC):
     @abstractmethod
     async def change_status_location(self, location_id: int, user_update: str) -> str:
         pass
+
+    @abstractmethod
+    async def update_details_location(
+        self,
+        location_id: int,
+        name: str,
+        phone: str,
+        address: str,
+        user_modify: str,
+        review_location: str,
+        new_file_url: Optional[str] = None,
+        new_file_filename: Optional[str] = None,
+        new_file_content_type: Optional[str] = None,
+        new_file_size: Optional[int] = None
+    ) -> str:
+        pass
+
+    @abstractmethod
+    async def update_schedule_location(
+        self,
+        location_id: int,
+        schedule: list[ScheduleRequestDomain],
+        user_modify: str,
+    ) -> str:
+        pass

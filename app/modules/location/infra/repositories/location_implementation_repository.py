@@ -201,3 +201,102 @@ class LocationImplementationRepository(LocationRepository):
         except DBAPIError as e:
             handle_error(e)
             raise RuntimeError("Este punto nunca se alcanza")
+
+    async def update_details_location(
+        self,
+        location_id: int,
+        name: str,
+        phone: str,
+        address: str,
+        user_modify: str,
+        review_location: str,
+        new_file_url: Optional[str] = None,
+        new_file_filename: Optional[str] = None,
+        new_file_content_type: Optional[str] = None,
+        new_file_size: Optional[int] = None
+    ) -> str:
+
+        stmt = text(
+            """
+            SELECT update_sede_details(
+                :p_sede_id, :p_nombre_sede, :p_telefono_sede, :p_direccion_sede,
+                :p_user_modify, :p_new_file_url, :p_new_file_filename,
+                :p_new_file_content_type, :p_new_file_size, :p_review_location
+            )
+            """
+        )
+
+        params = {
+            "p_sede_id": location_id,
+            "p_nombre_sede": name,
+            "p_telefono_sede": phone,
+            "p_direccion_sede": address,
+            "p_user_modify": user_modify,
+            "p_review_location": review_location,
+            "p_new_file_url": new_file_url,
+            "p_new_file_filename": new_file_filename,
+            "p_new_file_content_type": new_file_content_type,
+            "p_new_file_size": new_file_size,
+        }
+
+        try:
+            result = await self._uow.session.execute(stmt, params)
+            response: str = result.scalar_one()
+
+            if response.startswith("Error:"):
+                if "No se encontró la sede" in response:
+                    raise HTTPException(status_code=404, detail=response)
+                else:
+                    raise HTTPException(status_code=400, detail=response)
+            return response
+        except DBAPIError as e:
+            handle_error(e)
+            raise RuntimeError("Este punto nunca se alcanza")
+
+    async def update_schedule_location(
+        self,
+        location_id: int,
+        schedule: list[ScheduleRequestDomain],
+        user_modify: str,
+    ) -> str:
+        day_ranges = defaultdict(list)
+        for s in schedule:
+            day_name = s.day.value
+            for rango in s.ranges:
+                day_ranges[day_name].append({"start": rango.start, "end": rango.end})
+
+        schedule_list = [
+            {"day": day.value, "ranges": day_ranges.get(day.value, [])}
+            for day in DayOfWeek
+        ]
+
+        horarios_json = json.dumps(schedule_list)
+
+        stmt = text(
+            """
+            SELECT sp_modificar_horario_sede(
+                :p_sede_id, CAST(:p_horarios AS JSONB), :p_email_user
+            )
+            """
+        )
+
+        params = {
+            "p_sede_id": location_id,
+            "p_horarios": horarios_json,
+            "p_email_user": user_modify,
+        }
+
+        try:
+            result = await self._uow.session.execute(stmt, params)
+            response: str = result.scalar_one()
+
+            if response.startswith("Error:"):
+                if 'La sede con ID' in response and 'no existe' in response:
+                    raise HTTPException(status_code=404, detail=response)
+                else:
+                    raise HTTPException(status_code=400, detail=response)
+
+            return response
+        except DBAPIError as e:
+            handle_error(e)
+            raise RuntimeError("Este punto nunca se alcanza")
