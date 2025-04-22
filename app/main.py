@@ -9,6 +9,7 @@ from mediatr import Mediator
 from app.constants import injector_var, origins, prefix_v1, tags_metadata, uow_var
 from app.database import create_session
 from app.modules.auth.presentation.routes.v1.auth_v1_routes import AuthController
+from app.modules.customer.presentation.routes.v1.customer_v1_routes import CustomerController
 from app.modules.location.presentation.routes.v1.location_v1_routes import (
     LocationController,
 )
@@ -45,11 +46,13 @@ def create_app(mediator: Optional[Mediator] = None) -> FastAPI:
     role_controller = RoleController(mediator)
     location_controller = LocationController(mediator)
     auth_controller = AuthController(mediator)
+    customer_controller = CustomerController(mediator)
 
     app.include_router(user_controller.router, prefix=prefix_v1, tags=["User"])
     app.include_router(role_controller.router, prefix=prefix_v1, tags=["Role"])
     app.include_router(auth_controller.router, prefix=prefix_v1, tags=["Auth"])
     app.include_router(location_controller.router, prefix=prefix_v1, tags=["Location"])
+    app.include_router(customer_controller.router, prefix=prefix_v1, tags=["Customer"])
 
     return app
 

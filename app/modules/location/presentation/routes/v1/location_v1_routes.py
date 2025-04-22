@@ -1,7 +1,7 @@
 import json
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, Form, Path, Query, UploadFile
+from fastapi import APIRouter, Depends, Form, HTTPException, Path, Query, UploadFile, status
 from mediatr import Mediator
 
 from app.modules.auth.domain.models.user_auth_domain import UserAuth
@@ -190,7 +190,10 @@ class LocationController:
     ) -> int:
 
         if not current_user.email:
-            raise ValueError("User email not found in token")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email del usuario no encontrado en el token de autenticación."
+            )
 
         command = CreateLocationCommand(
             name_location=name_location,
