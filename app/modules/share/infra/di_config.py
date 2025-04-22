@@ -1,5 +1,7 @@
 from injector import Module, provider
 
+from app.modules.customer.domain.repositories.customer_repository import CustomerRepository
+from app.modules.customer.infra.repositories.customer_implementation_repository import CustomerImplementationRepository
 from app.modules.location.domain.repositories.location_repository import (
     LocationRepository,
 )
@@ -34,3 +36,7 @@ class AppModule(Module):
     @provider
     def provide_category_repository(self) -> CategoryRepository:
         return CategoryImplementationRepository()
+
+    @provider
+    def provide_customer_repository(self) -> CustomerRepository:
+        return CustomerImplementationRepository()
