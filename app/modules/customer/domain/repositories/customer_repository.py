@@ -1,13 +1,19 @@
 # customer_repository.py
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional  # Mantenido por si otros métodos lo usan o futuras refactorizaciones
 from datetime import date
+
+# Importaciones específicas del módulo (si CustomerResponse se usa aquí o en implementaciones)
+from app.modules.customer.domain.entities.customer_domain import CustomerResponse
+# Importación de tipo compartido (si ResponseList se usa aquí o en implementaciones)
+from app.modules.share.domain.repositories.repository_types import ResponseList
 
 
 class CustomerRepository(ABC):
     """
-    Abstract Base Class defining the repository interface for customer data operations.
-    Concrete implementations will interact with the actual database.
+    Clase Base Abstracta (ABC) que define la interfaz del repositorio
+    para las operaciones de datos de clientes.
+    Las implementaciones concretas interactuarán con la base de datos real.
     """
 
     @abstractmethod
@@ -18,8 +24,71 @@ class CustomerRepository(ABC):
         email_customer: Optional[str],
         phone_customer: Optional[str],
         birthdate_customer: Optional[date],
-        status_customer: Optional[str] = 'active'  # Coincide con el default de la BD/función
+        status_customer: Optional[str] = 'active'
     ) -> int:
+        """
+        Método abstracto para crear un nuevo registro de cliente.
+        Devuelve el ID del cliente recién creado.
+        """
+        pass  # La implementación real estará en la subclase concreta
 
-        pass
+    @abstractmethod
+    async def find_customers(
+        self, page_index: int, page_size: int
+    ) -> ResponseList[CustomerResponse]:
+        """
+        Método abstracto para buscar clientes con paginación.
+        Devuelve un objeto ResponseList que contiene una lista de objetos
+        CustomerResponse y metadatos de paginación (total de items, total de páginas).
+        """
+        pass  # La implementación real estará en la subclase concreta
 
+    @abstractmethod
+    async def update_details_customer(
+        self,
+        customer_id: int,           # ID del cliente a actualizar
+        name_customer: str,         # Nuevo nombre para el cliente
+        email_customer: str,        # Nuevo email para el cliente
+        phone_customer: str,        # Nuevo teléfono para el cliente
+        birthdate_customer: date,   # Nueva fecha de nacimiento para el cliente
+        user_modify: str            # Usuario que realiza la modificación
+    ) -> str:
+        """
+        Método abstracto para actualizar los detalles específicos de un cliente existente.
+
+        Args:
+            customer_id: El ID del cliente cuyos detalles se actualizarán.
+            name_customer: El nuevo nombre del cliente.
+            email_customer: El nuevo correo electrónico del cliente.
+            phone_customer: El nuevo número de teléfono del cliente.
+            birthdate_customer: La nueva fecha de nacimiento del cliente.
+            user_modify: El identificador del usuario que realiza la actualización.
+
+        Returns:
+            Un string indicando el resultado de la operación (ej. mensaje de éxito o error),
+            generalmente el mensaje devuelto por el stored procedure subyacente.
+        """
+        pass  # La implementación real estará en la subclase concreta que interactúe con la base de datos
+
+    @abstractmethod
+    async def change_status_customer(self, customer_id: int, user_modify: str) -> str:
+        """
+        Método abstracto para cambiar el estado de un cliente (por ejemplo, de 'activo' a 'bloqueado' o viceversa).
+
+        Este método define la firma que deben seguir las implementaciones concretas
+        del repositorio de clientes. La lógica real para interactuar con la base de datos
+        (por ejemplo, llamar al stored procedure 'change_customer_status')
+        se encontrará en la clase que herede de CustomerRepository.
+
+        Args:
+            customer_id (int): El ID del cliente cuyo estado se va a cambiar.
+            user_modify (str): El identificador (generalmente email o username) del usuario
+                               que está realizando la modificación. Este valor se usará
+                               para registrar quién hizo el cambio en la base de datos.
+
+        Returns:
+            str: Un mensaje de texto indicando el resultado de la operación.
+                 Normalmente será el mensaje devuelto por la base de datos o
+                 el stored procedure (ej: "Estado del cliente cambiado a bloqueado").
+        """
+        pass  # Indica que la implementación real debe ser proporcionada por una subclase.
