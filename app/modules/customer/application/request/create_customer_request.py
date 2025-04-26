@@ -10,8 +10,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, EmailStr
 class CustomerStatusEnum(str, Enum):
     """Enumera los estados válidos para un cliente."""
     ACTIVE = 'active'
-    PENDING = 'pending'
-    INACTIVE = 'inactive'
     BLOCKED = 'blocked'
 
 
@@ -29,7 +27,7 @@ class CreateCustomerRequest(BaseModel):
     # Optional permite que sea None.
     birthdate_customer: Optional[date] = Field(None, description="Fecha de nacimiento del cliente (YYYY-MM-DD).")
     # Usamos el Enum definido para restringir los valores. Optional permite que sea None.
-    status_customer: Optional[CustomerStatusEnum] = Field(CustomerStatusEnum.PENDING, description="Estado actual del cliente.")
+    status_customer: Optional[CustomerStatusEnum] = Field(CustomerStatusEnum.ACTIVE, description="Estado actual del cliente.")
 
     # --- Validadores de Campo ---
 
