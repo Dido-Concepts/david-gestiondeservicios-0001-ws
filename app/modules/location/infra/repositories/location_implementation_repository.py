@@ -114,7 +114,6 @@ class LocationImplementationRepository(LocationRepository):
                 insert_date=datetime.fromisoformat(item["insert_date"]),
                 location_review=item["review_location"],
                 url=item.get("url"),
-                annulled=item["annulled"],
                 filename=item.get("filename"),
                 content_type=item.get("content_type"),
                 size=item.get("size"),
