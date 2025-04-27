@@ -1,22 +1,25 @@
 # customer_implementation_repository.py
 
-from typing import Optional
 from datetime import date, datetime
+from typing import Optional
+
+from fastapi import HTTPException  # Necesario para levantar errores HTTP
 
 # Importaciones de SQLAlchemy y manejo de errores
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
-from fastapi import HTTPException  # Necesario para levantar errores HTTP
 
 # Asumiendo que estas rutas de importación son correctas para tu proyecto
 from app.constants import uow_var
 from app.modules.customer.domain.entities.customer_domain import CustomerEntity
+
+# Importa la interfaz abstracta que esta clase implementará
+from app.modules.customer.domain.repositories.customer_repository import (
+    CustomerRepository,
+)
 from app.modules.share.domain.repositories.repository_types import ResponseList
 from app.modules.share.infra.persistence.unit_of_work import UnitOfWork
 from app.modules.share.utils.handle_dbapi_error import handle_error
-
-# Importa la interfaz abstracta que esta clase implementará
-from app.modules.customer.domain.repositories.customer_repository import CustomerRepository
 
 
 class CustomerImplementationRepository(CustomerRepository):
@@ -44,7 +47,7 @@ class CustomerImplementationRepository(CustomerRepository):
         email_customer: Optional[str],
         phone_customer: Optional[str],
         birthdate_customer: Optional[date],
-        status_customer: Optional[str] = 'active'
+        status_customer: Optional[str] = "active",
     ) -> int:
         """
         Crea un nuevo cliente llamando al procedimiento almacenado 'create_customer'
@@ -78,7 +81,9 @@ class CustomerImplementationRepository(CustomerRepository):
 
     async def find_customers(
         self, page_index: int, page_size: int
-    ) -> 'ResponseList[CustomerEntity]':  # Usamos comillas si ResponseList no está importado globalmente
+    ) -> (
+        "ResponseList[CustomerEntity]"
+    ):  # Usamos comillas si ResponseList no está importado globalmente
         """
         Busca clientes de forma paginada llamando a la función almacenada 'get_customers'
         en la base de datos.
@@ -92,7 +97,10 @@ class CustomerImplementationRepository(CustomerRepository):
             # Ejecuta la sentencia
             result = await self._uow.session.execute(
                 stmt,
-                {"page_index": page_index, "page_size": page_size, },
+                {
+                    "page_index": page_index,
+                    "page_size": page_size,
+                },
             )
             # Obtiene el resultado JSON devuelto por la función almacenada
             data_dict = result.scalar_one()
@@ -102,11 +110,13 @@ class CustomerImplementationRepository(CustomerRepository):
             for item in data_dict.get("data", []):
                 # Parsea fechas/timestamps opcionales de string a objeto Python
                 birthdate_str = item.get("birthdate_customer")
-                birthdate_obj = date.fromisoformat(birthdate_str) if birthdate_str else None
+                birthdate_obj = (
+                    date.fromisoformat(birthdate_str) if birthdate_str else None
+                )
                 update_date_str = item.get("update_date")
-                update_date_obj = datetime.fromisoformat(update_date_str) if update_date_str else None
-                insert_date_str = item.get("insert_date")
-                insert_date_obj = datetime.fromisoformat(insert_date_str) if insert_date_str else None
+                update_date_obj = (
+                    datetime.fromisoformat(update_date_str) if update_date_str else None
+                )
 
                 # Crea una instancia de CustomerEntity
                 customer = CustomerEntity(
@@ -116,7 +126,7 @@ class CustomerImplementationRepository(CustomerRepository):
                     phone_customer=item.get("phone_customer"),
                     birthdate_customer=birthdate_obj,
                     status_customer=item["status_customer"],
-                    insert_date=insert_date_obj,
+                    insert_date=datetime.fromisoformat(item["insert_date"]),
                     update_date=update_date_obj,
                     user_create=item["user_create"],
                     user_modify=item.get("user_modify"),
@@ -141,7 +151,7 @@ class CustomerImplementationRepository(CustomerRepository):
         email_customer: str,
         phone_customer: str,
         birthdate_customer: date,
-        user_modify: str
+        user_modify: str,
     ) -> str:
         """
         Implementación concreta para actualizar los detalles de un cliente.
@@ -223,7 +233,9 @@ class CustomerImplementationRepository(CustomerRepository):
 
             # Verifica si la respuesta de la función indica un error conocido.
             # Basado en la función PL/pgSQL, un mensaje común de error es "Cliente no encontrado..."
-            if response.startswith("Cliente no encontrado") or response.startswith("Estado actual desconocido"):
+            if response.startswith("Cliente no encontrado") or response.startswith(
+                "Estado actual desconocido"
+            ):
                 # Si el cliente no se encontró u ocurrió otro error definido en la función,
                 # lanza una excepción HTTP 404 (Not Found) o 400 (Bad Request) para notificar al cliente de la API.
                 # Usamos 404 si es "no encontrado", podríamos usar 400 para otros errores como "estado desconocido".
