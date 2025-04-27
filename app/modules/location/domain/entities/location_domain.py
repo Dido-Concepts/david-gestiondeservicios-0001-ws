@@ -36,7 +36,6 @@ class LocationResponse:
     direccion_sede: str
     insert_date: datetime
     location_review: str
-    annulled: bool
     url: Optional[str] = None
     filename: Optional[str] = None
     content_type: Optional[str] = None

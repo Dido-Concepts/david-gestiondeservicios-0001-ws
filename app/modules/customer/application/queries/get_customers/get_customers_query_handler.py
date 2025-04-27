@@ -40,11 +40,7 @@ class GetAllCustomerQueryResponse(BaseModel):
     phone_customer: Optional[str]
     birthdate_customer: Optional[date]
     status_customer: str
-    annulled: bool
     insert_date: datetime
-    update_date: Optional[datetime]
-    user_create: str
-    user_modify: Optional[str]
 
     # Configuración para Pydantic si se necesita (ej: para alias en JSON)
     # class Config:
@@ -106,11 +102,7 @@ class GetAllCustomerQueryHandler(
                 phone_customer=customer.phone_customer,
                 birthdate_customer=customer.birthdate_customer,
                 status_customer=customer.status_customer,
-                annulled=customer.annulled,
                 insert_date=customer.insert_date,
-                update_date=customer.update_date,
-                user_create=customer.user_create,
-                user_modify=customer.user_modify,
             )
             for customer in repo_response.data  # Itera sobre la lista de CustomerResponse devuelta por el repo
         ]
