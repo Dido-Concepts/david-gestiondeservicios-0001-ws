@@ -39,10 +39,7 @@ class CustomerController:
     """
     def __init__(self, mediator: Mediator):
         self.mediator = mediator
-        self.router = APIRouter(
-            prefix="/v1",
-            tags=["Customer"]
-        )
+        self.router = APIRouter()
         self._add_routes()
 
     def _add_routes(self) -> None:

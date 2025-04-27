@@ -10,7 +10,7 @@ from fastapi import HTTPException  # Necesario para levantar errores HTTP
 
 # Asumiendo que estas rutas de importación son correctas para tu proyecto
 from app.constants import uow_var
-from app.modules.customer.domain.entities.customer_domain import CustomerResponse
+from app.modules.customer.domain.entities.customer_domain import CustomerEntity
 from app.modules.share.domain.repositories.repository_types import ResponseList
 from app.modules.share.infra.persistence.unit_of_work import UnitOfWork
 from app.modules.share.utils.handle_dbapi_error import handle_error
@@ -78,7 +78,7 @@ class CustomerImplementationRepository(CustomerRepository):
 
     async def find_customers(
         self, page_index: int, page_size: int
-    ) -> 'ResponseList[CustomerResponse]':  # Usamos comillas si ResponseList no está importado globalmente
+    ) -> 'ResponseList[CustomerEntity]':  # Usamos comillas si ResponseList no está importado globalmente
         """
         Busca clientes de forma paginada llamando a la función almacenada 'get_customers'
         en la base de datos.
@@ -108,16 +108,15 @@ class CustomerImplementationRepository(CustomerRepository):
                 insert_date_str = item.get("insert_date")
                 insert_date_obj = datetime.fromisoformat(insert_date_str) if insert_date_str else None
 
-                # Crea una instancia de CustomerResponse
-                customer = CustomerResponse(
+                # Crea una instancia de CustomerEntity
+                customer = CustomerEntity(
                     id=item["id"],
                     name_customer=item["name_customer"],
                     email_customer=item.get("email_customer"),
                     phone_customer=item.get("phone_customer"),
                     birthdate_customer=birthdate_obj,
                     status_customer=item["status_customer"],
-                    annulled=item["annulled"],
-                    insert_date=insert_date_obj,  # Asegúrate que la BD lo devuelve como ISO String
+                    insert_date=insert_date_obj,
                     update_date=update_date_obj,
                     user_create=item["user_create"],
                     user_modify=item.get("user_modify"),

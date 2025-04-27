@@ -4,7 +4,7 @@ from typing import Optional  # Mantenido por si otros métodos lo usan o futuras
 from datetime import date
 
 # Importaciones específicas del módulo (si CustomerResponse se usa aquí o en implementaciones)
-from app.modules.customer.domain.entities.customer_domain import CustomerResponse
+from app.modules.customer.domain.entities.customer_domain import CustomerEntity
 # Importación de tipo compartido (si ResponseList se usa aquí o en implementaciones)
 from app.modules.share.domain.repositories.repository_types import ResponseList
 
@@ -35,7 +35,7 @@ class CustomerRepository(ABC):
     @abstractmethod
     async def find_customers(
         self, page_index: int, page_size: int
-    ) -> ResponseList[CustomerResponse]:
+    ) -> ResponseList[CustomerEntity]:
         """
         Método abstracto para buscar clientes con paginación.
         Devuelve un objeto ResponseList que contiene una lista de objetos
