@@ -1,6 +1,6 @@
 # customer_repository.py
 from abc import ABC, abstractmethod
-from typing import Optional  # Mantenido por si otros métodos lo usan o futuras refactorizaciones
+from typing import Optional
 from datetime import date
 
 # Importaciones específicas del módulo (si CustomerResponse se usa aquí o en implementaciones)
@@ -46,12 +46,12 @@ class CustomerRepository(ABC):
     @abstractmethod
     async def update_details_customer(
         self,
-        customer_id: int,           # ID del cliente a actualizar
-        name_customer: str,         # Nuevo nombre para el cliente
-        email_customer: str,        # Nuevo email para el cliente
-        phone_customer: str,        # Nuevo teléfono para el cliente
-        birthdate_customer: date,   # Nueva fecha de nacimiento para el cliente
-        user_modify: str            # Usuario que realiza la modificación
+        customer_id: int,          # ID del cliente a actualizar
+        name_customer: str,        # Nuevo nombre para el cliente
+        email_customer: str,       # Nuevo email para el cliente
+        phone_customer: str,       # Nuevo teléfono para el cliente
+        birthdate_customer: date,  # Nueva fecha de nacimiento para el cliente
+        user_modify: str           # Usuario que realiza la modificación
     ) -> str:
         """
         Método abstracto para actualizar los detalles específicos de un cliente existente.
@@ -90,5 +90,28 @@ class CustomerRepository(ABC):
             str: Un mensaje de texto indicando el resultado de la operación.
                  Normalmente será el mensaje devuelto por la base de datos o
                  el stored procedure (ej: "Estado del cliente cambiado a bloqueado").
+        """
+        pass  # Indica que la implementación real debe ser proporcionada por una subclase.
+
+    # --- NUEVO MÉTODO AÑADIDO ---
+    @abstractmethod
+    async def delete_customer(self, customer_id: int, user_modify: str) -> str:
+        """
+        Método abstracto para realizar la eliminación lógica de un cliente.
+
+        Este método define la firma para la operación de borrado lógico.
+        La implementación concreta en una subclase interactuará con la base de datos,
+        probablemente llamando a un stored procedure como 'delete_customer_logically',
+        que marcará al cliente como anulado (ej. estableciendo el campo 'annulled' a true).
+
+        Args:
+            customer_id (int): El ID del cliente que se marcará como anulado.
+            user_modify (str): El identificador del usuario que realiza la operación de anulación.
+                               Este valor se usará para registrar quién realizó la acción.
+
+        Returns:
+            str: Un mensaje de texto indicando el resultado de la operación de anulación.
+                 Usualmente, será el mensaje devuelto por el stored procedure
+                 (ej: "Cliente con ID: X marcado como anulado correctamente.").
         """
         pass  # Indica que la implementación real debe ser proporcionada por una subclase.
