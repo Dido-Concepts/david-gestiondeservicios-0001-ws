@@ -74,7 +74,7 @@ class CustomerImplementationRepository(CustomerRepository):
             return customer_id
         except DBAPIError as e:
             handle_error(e)
-            raise RuntimeError("Este punto nunca se alcanza")
+            raise RuntimeError("Este punto nunca se alcanza")  # handle_error siempre levanta excepción
 
     async def find_customers(
         self, page_index: int, page_size: int
@@ -132,7 +132,7 @@ class CustomerImplementationRepository(CustomerRepository):
             return response
         except DBAPIError as e:
             handle_error(e)
-            raise RuntimeError("Este punto nunca se alcanza")
+            raise RuntimeError("Este punto nunca se alcanza")  # handle_error siempre levanta excepción
 
     async def update_details_customer(
         self,
@@ -190,9 +190,8 @@ class CustomerImplementationRepository(CustomerRepository):
 
         except DBAPIError as e:
             handle_error(e)
-            raise RuntimeError("Este punto nunca se alcanza")
+            raise RuntimeError("Este punto nunca se alcanza")  # handle_error siempre levanta excepción
 
-    # --- MÉTODO IMPLEMENTADO ---
     async def change_status_customer(self, customer_id: int, user_modify: str) -> str:
         """
         Implementación concreta del método para cambiar el estado de un cliente.
@@ -200,13 +199,9 @@ class CustomerImplementationRepository(CustomerRepository):
         y devuelve el mensaje resultante.
         """
         # Define la sentencia SQL para llamar a la función PostgreSQL creada anteriormente.
-        # Usamos nombres de parámetros explícitos (:p_customer_id, :p_user_email)
-        # que coinciden con los esperados por la función PL/pgSQL.
         stmt = text("SELECT change_customer_status(:p_customer_id, :p_user_email)")
 
         # Prepara el diccionario de parámetros que se pasarán a la consulta.
-        # Mapea los argumentos de la función Python ('customer_id', 'user_modify')
-        # a los nombres esperados por la consulta SQL (:p_customer_id, :p_user_email).
         params = {
             "p_customer_id": customer_id,
             "p_user_email": user_modify,  # 'user_modify' de Python se mapea a ':p_user_email' en SQL
@@ -214,26 +209,74 @@ class CustomerImplementationRepository(CustomerRepository):
 
         try:
             # Ejecuta la función en la base de datos usando la sesión de la Unit of Work.
-            # Pasa la sentencia SQL y los parámetros.
             result = await self._uow.session.execute(stmt, params)
 
             # Obtiene el resultado devuelto por la función de base de datos.
-            # scalar_one() espera que la función devuelva exactamente una fila y una columna (el mensaje TEXT).
             response: str = result.scalar_one()
 
             # Verifica si la respuesta de la función indica un error conocido.
-            # Basado en la función PL/pgSQL, un mensaje común de error es "Cliente no encontrado..."
-            if response.startswith("Cliente no encontrado") or response.startswith("Estado actual desconocido"):
-                # Si el cliente no se encontró u ocurrió otro error definido en la función,
-                # lanza una excepción HTTP 404 (Not Found) o 400 (Bad Request) para notificar al cliente de la API.
-                # Usamos 404 si es "no encontrado", podríamos usar 400 para otros errores como "estado desconocido".
+            if response.startswith("Cliente no encontrado") or response.startswith("Estado actual"):  # Mejorado para capturar ambos errores de SP
                 status_code = 404 if "Cliente no encontrado" in response else 400
                 raise HTTPException(status_code=status_code, detail=response)
 
-            # Si no es un mensaje de error conocido, se asume que la operación fue exitosa
-            # y se devuelve el mensaje tal cual (ej: "Estado del cliente cambiado a bloqueado").
+            # Si no es un mensaje de error conocido, se asume éxito
             return response
 
         except DBAPIError as e:
             handle_error(e)
+            raise RuntimeError("Este punto nunca se alcanza")  # handle_error siempre levanta excepción
+
+    # --- NUEVO MÉTODO IMPLEMENTADO ---
+    async def delete_customer(self, customer_id: int, user_modify: str) -> str:
+        """
+        Implementación concreta para realizar la eliminación lógica de un cliente.
+        Llama a la función de base de datos 'delete_customer' y devuelve
+        el mensaje resultante.
+        """
+        # Define la sentencia SQL para llamar a la función PostgreSQL 'delete_customer'.
+        # Usamos nombres de parámetros explícitos (:p_customer_id, :p_user_modifier)
+        # que coinciden con los esperados por la función PL/pgSQL creada.
+        stmt = text("SELECT delete_customer(:p_customer_id, :p_user_modifier)")
+
+        # Prepara el diccionario de parámetros para la consulta SQL.
+        # Mapea los argumentos de Python ('customer_id', 'user_modify') a los
+        # nombres esperados en la consulta (:p_customer_id, :p_user_modifier).
+        params = {
+            "p_customer_id": customer_id,
+            "p_user_modifier": user_modify,  # Mapea 'user_modify' al parámetro del SP
+        }
+
+        try:
+            # Ejecuta la llamada a la función almacenada en la base de datos
+            # utilizando la sesión de la Unit of Work actual.
+            result = await self._uow.session.execute(stmt, params)
+
+            # Obtiene el mensaje de texto devuelto por la función de PostgreSQL.
+            # scalar_one() espera que la función devuelva exactamente una fila y una columna.
+            response: str = result.scalar_one()
+
+            # Verifica si la respuesta de la función de base de datos indica un error específico.
+            # En este caso, el único error que manejamos explícitamente para levantar HTTPException
+            # es cuando el cliente no se encuentra. El mensaje "ya está anulado" se considera informativo.
+            if response.startswith("Error: Cliente no encontrado"):
+                # Si la función devuelve el error de cliente no encontrado,
+                # levantamos una excepción HTTP 404 (Not Found).
+                raise HTTPException(status_code=404, detail=response)
+            elif response.startswith("Error:"):  # Captura otros errores que empiecen con "Error:"
+                # Para otros errores inesperados devueltos por la función que empiecen con "Error:"
+                # (aunque el SP actual solo define uno explícito), lanzamos un 400.
+                # Podríamos usar 500 si consideramos que son errores internos del SP no previstos.
+                raise HTTPException(status_code=400, detail=response)
+
+            # Si la respuesta no indica un error manejado explícitamente (ej. es un mensaje de éxito
+            # como "Cliente ... marcado como anulado correctamente" o el informativo
+            # "El cliente ... ya se encuentra anulado"), simplemente devolvemos el mensaje.
+            return response
+
+        except DBAPIError as e:
+            # Captura errores generales de la base de datos (conexión, sintaxis SQL inesperada, etc.)
+            # y los maneja usando la función 'handle_error', que probablemente loguea
+            # y levanta una excepción HTTP genérica (ej. 500 Internal Server Error).
+            handle_error(e)
+            # Esta línea teóricamente no se alcanza si handle_error siempre levanta una excepción.
             raise RuntimeError("Este punto nunca se alcanza")
