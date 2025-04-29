@@ -117,6 +117,7 @@ class LocationImplementationRepository(LocationRepository):
                 filename=item.get("filename"),
                 content_type=item.get("content_type"),
                 size=item.get("size"),
+                status=item.get("status"),
             )
             for item in data_dict["data"]
         ]
@@ -212,7 +213,7 @@ class LocationImplementationRepository(LocationRepository):
         new_file_url: Optional[str] = None,
         new_file_filename: Optional[str] = None,
         new_file_content_type: Optional[str] = None,
-        new_file_size: Optional[int] = None
+        new_file_size: Optional[int] = None,
     ) -> str:
 
         stmt = text(
@@ -290,7 +291,7 @@ class LocationImplementationRepository(LocationRepository):
             response: str = result.scalar_one()
 
             if response.startswith("Error:"):
-                if 'La sede con ID' in response and 'no existe' in response:
+                if "La sede con ID" in response and "no existe" in response:
                     raise HTTPException(status_code=404, detail=response)
                 else:
                     raise HTTPException(status_code=400, detail=response)

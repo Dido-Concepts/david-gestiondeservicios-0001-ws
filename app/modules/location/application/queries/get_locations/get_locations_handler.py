@@ -27,6 +27,7 @@ class FindAllLocationQueryResponse(BaseModel):
     address_location: str
     location_review: str
     insert_date: datetime
+    status: bool
     url: Optional[str] = None
     filename: Optional[str] = None
     content_type: Optional[str] = None
@@ -64,6 +65,7 @@ class FindAllLocationQueryHandler(
                 filename=location.filename,
                 content_type=location.content_type,
                 size=location.size,
+                status=location.status,
             )
             for location in res.data
         ]
