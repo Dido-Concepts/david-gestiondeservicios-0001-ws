@@ -1,7 +1,16 @@
 import json
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Path, Query, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    Form,
+    HTTPException,
+    Path,
+    Query,
+    UploadFile,
+    status,
+)
 from mediatr import Mediator
 
 from app.modules.auth.domain.models.user_auth_domain import UserAuth
@@ -20,6 +29,10 @@ from app.modules.location.application.commands.update_location.update_location_c
 )
 from app.modules.location.application.commands.update_schedule_location.update_schedule_location_command_handler import (
     UpdateScheduleLocationCommand,
+)
+from app.modules.location.application.queries.get_all_locations_catolog.get_all_locations_catalog_handler import (
+    GetAllLocationsCatalogQuery,
+    GetAllLocationsCatalogQueryResponse,
 )
 from app.modules.location.application.queries.get_location_by_id.get_location_by_id_handler import (
     GetLocationByIdQuery,
@@ -107,6 +120,11 @@ class LocationController:
         )(self.get_locations)
 
         self.router.get(
+            "/location/list-catalog",
+            dependencies=[Depends(permission_required(roles=["admin"]))],
+        )(self.get_locations_catalog)
+
+        self.router.get(
             "/location/{id_location}",
             dependencies=[Depends(permission_required(roles=["admin"]))],
         )(self.get_location_info_id)
@@ -192,7 +210,7 @@ class LocationController:
         if not current_user.email:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email del usuario no encontrado en el token de autenticación."
+                detail="Email del usuario no encontrado en el token de autenticación.",
             )
 
         command = CreateLocationCommand(
@@ -280,4 +298,13 @@ class LocationController:
         )
 
         result: str = await self.mediator.send_async(command)
+        return result
+
+    async def get_locations_catalog(self) -> list[GetAllLocationsCatalogQueryResponse]:
+
+        query = GetAllLocationsCatalogQuery()
+
+        result: list[GetAllLocationsCatalogQueryResponse] = (
+            await self.mediator.send_async(query)
+        )
         return result

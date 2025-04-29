@@ -14,6 +14,7 @@ from app.modules.location.domain.entities.location_domain import (
     LocationResponse,
     ScheduleRangeDomain,
     ScheduleRequestDomain,
+    SedeDomain,
 )
 from app.modules.location.domain.repositories.location_repository import (
     LocationRepository,
@@ -297,6 +298,40 @@ class LocationImplementationRepository(LocationRepository):
                     raise HTTPException(status_code=400, detail=response)
 
             return response
+        except DBAPIError as e:
+            handle_error(e)
+            raise RuntimeError("Este punto nunca se alcanza")
+
+    async def get_all_location_catalog(self) -> list[SedeDomain]:
+
+        stmt = text(
+            """
+            SELECT * FROM location_sp_get_all_sedes_ordered();
+            """
+        )
+
+        try:
+            result = await self._uow.session.execute(stmt)
+            records = result.fetchall()
+            sedes_list: list[SedeDomain] = []
+
+            for record in records:
+
+                sede = SedeDomain(
+                    id=record.id,
+                    nombre_sede=record.nombre_sede,
+                    telefono_sede=record.telefono_sede,
+                    direccion_sede=record.direccion_sede,
+                    insert_date=record.insert_date,
+                    update_date=record.update_date,
+                    user_create=record.user_create,
+                    user_modify=record.user_modify,
+                    file_id=record.file_id,
+                    review_location=record.review_location,
+                )
+                sedes_list.append(sede)
+
+            return sedes_list
         except DBAPIError as e:
             handle_error(e)
             raise RuntimeError("Este punto nunca se alcanza")
