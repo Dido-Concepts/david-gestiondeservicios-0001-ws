@@ -2,15 +2,14 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
-from app.modules.services.domain.entities.service_domain import ServiceEntity
-
 
 @dataclass
-class CategoryEntity:
-    category_id: int
-    category_name: str
+class ServiceEntity:
+    service_id: int
+    service_name: str
+    duration_minutes: Optional[float]
+    price: float
     description: Optional[str]
-    services: list[ServiceEntity]
     insert_date: datetime
     update_date: Optional[datetime]
     user_create: str

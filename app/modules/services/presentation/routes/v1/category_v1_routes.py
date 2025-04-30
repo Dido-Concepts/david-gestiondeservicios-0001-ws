@@ -1,11 +1,23 @@
-from fastapi import APIRouter, Depends
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query
 from mediatr import Mediator
 
 from app.modules.auth.domain.models.user_auth_domain import UserAuth
-from app.modules.auth.presentation.dependencies.auth_dependencies import get_current_user, permission_required
-from app.modules.services.application.commands.create_category.create_category_command_handler import CreateCategoryCommand
-from app.modules.services.application.queries.get_categories.get_categories_handler import GetCategoriesQuery, GetCategoriesQueryResponse
-from app.modules.services.application.request.create_category_request import CreateCategoryRequest
+from app.modules.auth.presentation.dependencies.auth_dependencies import (
+    get_current_user,
+    permission_required,
+)
+from app.modules.services.application.commands.create_category.create_category_command_handler import (
+    CreateCategoryCommand,
+)
+from app.modules.services.application.queries.get_categories.get_categories_handler import (
+    GetCategoriesQuery,
+    GetCategoriesQueryResponse,
+)
+from app.modules.services.application.request.create_category_request import (
+    CreateCategoryRequest,
+)
 
 
 class CategoryController:
@@ -26,23 +38,26 @@ class CategoryController:
         )(self.get_categories)
 
     async def create_category(
-            self,
-            request: CreateCategoryRequest,
-            current_user: UserAuth = Depends(get_current_user)) -> int:
+        self,
+        request: CreateCategoryRequest,
+        current_user: UserAuth = Depends(get_current_user),
+    ) -> str:
 
         if not current_user.email:
             raise ValueError("User email not found in token")
 
         command = CreateCategoryCommand(
+            location_id=request.location_id,
             name_category=request.name_category,
             user_create=current_user.email,
-            description_category=request.description_category
+            description_category=request.description_category,
         )
 
-        result: int = await self.mediator.send_async(command)
+        result: str = await self.mediator.send_async(command)
         return result
 
-    async def get_categories(self) -> list[GetCategoriesQueryResponse]:
-        query = GetCategoriesQuery()
+    async def get_categories(
+        self, query: Annotated[GetCategoriesQuery, Query()]
+    ) -> list[GetCategoriesQueryResponse]:
         result: list[GetCategoriesQueryResponse] = await self.mediator.send_async(query)
         return result

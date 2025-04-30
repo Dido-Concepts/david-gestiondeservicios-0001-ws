@@ -5,6 +5,7 @@ from app.modules.location.domain.entities.location_domain import (
     LocationInfoResponse,
     LocationResponse,
     ScheduleRequestDomain,
+    SedeDomain,
 )
 from app.modules.share.domain.repositories.repository_types import ResponseList
 
@@ -53,7 +54,7 @@ class LocationRepository(ABC):
         new_file_url: Optional[str] = None,
         new_file_filename: Optional[str] = None,
         new_file_content_type: Optional[str] = None,
-        new_file_size: Optional[int] = None
+        new_file_size: Optional[int] = None,
     ) -> str:
         pass
 
@@ -64,4 +65,10 @@ class LocationRepository(ABC):
         schedule: list[ScheduleRequestDomain],
         user_modify: str,
     ) -> str:
+        pass
+
+    @abstractmethod
+    async def get_all_location_catalog(
+        self,
+    ) -> list[SedeDomain]:
         pass
