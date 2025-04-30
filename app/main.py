@@ -9,9 +9,14 @@ from mediatr import Mediator
 from app.constants import injector_var, origins, prefix_v1, tags_metadata, uow_var
 from app.database import create_session
 from app.modules.auth.presentation.routes.v1.auth_v1_routes import AuthController
-from app.modules.customer.presentation.routes.v1.customer_v1_routes import CustomerController
+from app.modules.customer.presentation.routes.v1.customer_v1_routes import (
+    CustomerController,
+)
 from app.modules.location.presentation.routes.v1.location_v1_routes import (
     LocationController,
+)
+from app.modules.services.presentation.routes.v1.category_v1_routes import (
+    CategoryController,
 )
 from app.modules.share.infra.di_config import AppModule
 from app.modules.share.infra.exception_handlers import (
@@ -47,12 +52,14 @@ def create_app(mediator: Optional[Mediator] = None) -> FastAPI:
     location_controller = LocationController(mediator)
     auth_controller = AuthController(mediator)
     customer_controller = CustomerController(mediator)
+    category_controller = CategoryController(mediator)
 
     app.include_router(user_controller.router, prefix=prefix_v1, tags=["User"])
     app.include_router(role_controller.router, prefix=prefix_v1, tags=["Role"])
     app.include_router(auth_controller.router, prefix=prefix_v1, tags=["Auth"])
     app.include_router(location_controller.router, prefix=prefix_v1, tags=["Location"])
     app.include_router(customer_controller.router, prefix=prefix_v1, tags=["Customer"])
+    app.include_router(category_controller.router, prefix=prefix_v1, tags=["Service"])
 
     return app
 

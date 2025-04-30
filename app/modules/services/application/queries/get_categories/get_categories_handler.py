@@ -1,7 +1,8 @@
-from typing import Optional, List
+from datetime import datetime
+from typing import List, Optional
 
 from mediatr import Mediator
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.constants import injector_var
 from app.modules.services.domain.repositories.category_repository import (
@@ -15,8 +16,16 @@ from app.modules.share.domain.handler.request_handler import IRequestHandler
 # --- Query Object ---
 # No se necesitan parámetros ya que obtenemos todas las categorías activas
 class GetCategoriesQuery(BaseModel):
-    """Query para solicitar todas las categorías activas."""
-    pass  # Es una query vacía, solo sirve para disparar el handler
+    location: int = Field(0, ge=0, description="ID de la ubicación a filtrar")
+
+
+class ServiceResponse(BaseModel):
+    service_id: int
+    service_name: str
+    duration_minutes: Optional[float] = None
+    price: float
+    description: Optional[str] = None
+    insert_date: datetime
 
 
 # --- Response Object (para una categoría individual en la lista) ---
@@ -25,22 +34,29 @@ class GetCategoriesQueryResponse(BaseModel):
     ViewModel que representa una categoría en la respuesta de la API.
     Mapea los campos desde CategoryResponse del dominio.
     """
-    id_category: int
-    name_category: str
-    description_category: Optional[str]
+
+    category_id: int
+    category_name: str
+    description: Optional[str] = None
+    insert_date: datetime
+    services: list[ServiceResponse] = []
 
 
 # --- Handler ---
 @Mediator.handler
 class GetCategoriesQueryHandler(
     IRequestHandler[
-        GetCategoriesQuery, list[GetCategoriesQueryResponse]  # El resultado es una Lista, no un objeto paginado
+        GetCategoriesQuery,
+        list[
+            GetCategoriesQueryResponse
+        ],  # El resultado es una Lista, no un objeto paginado
     ]
 ):
     """
     Handler para procesar la solicitud GetCategoriesQuery.
     Obtiene todas las categorías activas del repositorio y las devuelve como una lista.
     """
+
     def __init__(self) -> None:
         """Inicializa el handler inyectando las dependencias necesarias."""
         injector = injector_var.get()
@@ -48,7 +64,8 @@ class GetCategoriesQueryHandler(
         self.category_repository = injector.get(CategoryRepository)  # type: ignore[type-abstract]
 
     async def handle(
-        self, query: GetCategoriesQuery  # La query se recibe pero no contiene datos útiles aquí
+        self,
+        query: GetCategoriesQuery,  # La query se recibe pero no contiene datos útiles aquí
     ) -> List[GetCategoriesQueryResponse]:  # Devuelve una lista directamente
         """
         Maneja la ejecución de la query.
@@ -61,22 +78,29 @@ class GetCategoriesQueryHandler(
             las categorías activas.
         """
 
-        # 1. Llamar al repositorio para obtener las entidades de dominio
-        # No se pasan argumentos de paginación
-        categories = await self.category_repository.find_categories()
+        categories = await self.category_repository.find_categories(
+            location=query.location
+        )
 
-        # 2. Mapear las entidades de dominio a los ViewModels/DTOs de respuesta
-        # En este caso, los nombres de campo coinciden, por lo que el mapeo es directo.
-        # Si los nombres fueran diferentes, aquí se haría la traducción.
         response_data = [
             GetCategoriesQueryResponse(
-                id_category=category.id_category,
-                name_category=category.name_category,
-                description_category=category.description_category,
+                category_id=category.category_id,
+                category_name=category.category_name,
+                description=category.description,
+                insert_date=category.insert_date,
+                services=[
+                    ServiceResponse(
+                        service_id=service.service_id,
+                        service_name=service.service_name,
+                        duration_minutes=service.duration_minutes,
+                        price=service.price,
+                        description=service.description,
+                        insert_date=service.insert_date,
+                    )
+                    for service in category.services
+                ],
             )
-            for category in categories  # Iterar sobre la lista devuelta por el repo
+            for category in categories
         ]
 
-        # 3. Devolver la lista de respuestas directamente
-        # No hay metadatos de paginación ni envoltura PaginatedItemsViewModel
         return response_data

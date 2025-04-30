@@ -5,8 +5,18 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class CreateCategoryRequest(BaseModel):
+    location_id: int
     name_category: str
     description_category: Optional[str] = None
+
+    @field_validator("location_id")
+    def validate_location_id(cls, v: int) -> int:
+        """
+        Valida que location_id sea mayor que 0.
+        """
+        if v <= 0:
+            raise ValueError("location_id debe ser mayor que 0.")
+        return v
 
     @field_validator("name_category")
     def validate_name_category(cls, v: str) -> str:
@@ -15,14 +25,13 @@ class CreateCategoryRequest(BaseModel):
         y solo contenga letras (incluyendo tildes y ñ), números y espacios.
         """
         if not v or not v.strip():
-            raise ValueError("name_category no puede ser vacío ni contener solo espacios.")
-        # Regex para permitir letras (mayúsculas, minúsculas, con tildes), ñ, números y espacios.
-        # ^                  -> inicio de la cadena
-        # [A-ZÁÉÍÓÚÜÑ...]   -> conjunto de caracteres permitidos
-        # +                  -> una o más ocurrencias de los caracteres permitidos
-        # $                  -> fin de la cadena
+            raise ValueError(
+                "name_category no puede ser vacío ni contener solo espacios."
+            )
         if not re.match(r"^[A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9 ]+$", v):
-            raise ValueError("name_category solo debe contener letras (incluyendo tildes y ñ), números y espacios.")
+            raise ValueError(
+                "name_category solo debe contener letras (incluyendo tildes y ñ), números y espacios."
+            )
 
         return v
 
@@ -37,17 +46,22 @@ class CreateCategoryRequest(BaseModel):
             return v
 
         if not v or not v.strip():
-            raise ValueError("description_category, si se proporciona, no puede ser vacío ni contener solo espacios.")
+            raise ValueError(
+                "description_category, si se proporciona, no puede ser vacío ni contener solo espacios."
+            )
 
         if not re.match(r"^[A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9 ]+$", v):
-            raise ValueError("description_category, si se proporciona, solo debe contener letras (incluyendo tildes y ñ), números y espacios.")
+            raise ValueError(
+                "description_category, si se proporciona, solo debe contener letras (incluyendo tildes y ñ), números y espacios."
+            )
         return v
 
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
+                "location_id": 1,
                 "name_category": "Tecnología Móvil",
-                "description_category": "Smartphones tablets y accesorios 2025"
+                "description_category": "Smartphones tablets y accesorios 2025",
             }
         }
     )

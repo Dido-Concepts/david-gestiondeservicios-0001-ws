@@ -153,6 +153,7 @@ class LocationImplementationRepository(LocationRepository):
             direccion_sede=data_dict["direccion_sede"],
             location_review=data_dict["location_review"],
             insert_date=datetime.fromisoformat(data_dict["insert_date"]),
+            status=data_dict["status"],
             file=FileResponse(
                 id=data_dict["file"]["id_file"],
                 url=data_dict["file"]["url"],
@@ -328,6 +329,7 @@ class LocationImplementationRepository(LocationRepository):
                     user_modify=record.user_modify,
                     file_id=record.file_id,
                     review_location=record.review_location,
+                    status=True,
                 )
                 sedes_list.append(sede)
 

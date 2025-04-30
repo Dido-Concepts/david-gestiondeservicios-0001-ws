@@ -53,6 +53,7 @@ class LocationInfoResponse:
     insert_date: datetime
     file: FileResponse
     schedules: list[ScheduleRequestDomain]
+    status: bool
 
 
 @dataclass
@@ -67,3 +68,4 @@ class SedeDomain:
     user_modify: Optional[str]
     file_id: Optional[int]
     review_location: str
+    status: bool
