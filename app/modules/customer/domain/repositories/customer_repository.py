@@ -1,4 +1,3 @@
-# customer_repository.py
 from abc import ABC, abstractmethod
 from typing import Optional
 from datetime import date
