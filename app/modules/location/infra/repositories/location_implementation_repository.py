@@ -14,6 +14,7 @@ from app.modules.location.domain.entities.location_domain import (
     LocationResponse,
     ScheduleRangeDomain,
     ScheduleRequestDomain,
+    SedeDomain,
 )
 from app.modules.location.domain.repositories.location_repository import (
     LocationRepository,
@@ -117,6 +118,7 @@ class LocationImplementationRepository(LocationRepository):
                 filename=item.get("filename"),
                 content_type=item.get("content_type"),
                 size=item.get("size"),
+                status=item.get("status"),
             )
             for item in data_dict["data"]
         ]
@@ -151,6 +153,7 @@ class LocationImplementationRepository(LocationRepository):
             direccion_sede=data_dict["direccion_sede"],
             location_review=data_dict["location_review"],
             insert_date=datetime.fromisoformat(data_dict["insert_date"]),
+            status=data_dict["status"],
             file=FileResponse(
                 id=data_dict["file"]["id_file"],
                 url=data_dict["file"]["url"],
@@ -212,7 +215,7 @@ class LocationImplementationRepository(LocationRepository):
         new_file_url: Optional[str] = None,
         new_file_filename: Optional[str] = None,
         new_file_content_type: Optional[str] = None,
-        new_file_size: Optional[int] = None
+        new_file_size: Optional[int] = None,
     ) -> str:
 
         stmt = text(
@@ -290,12 +293,47 @@ class LocationImplementationRepository(LocationRepository):
             response: str = result.scalar_one()
 
             if response.startswith("Error:"):
-                if 'La sede con ID' in response and 'no existe' in response:
+                if "La sede con ID" in response and "no existe" in response:
                     raise HTTPException(status_code=404, detail=response)
                 else:
                     raise HTTPException(status_code=400, detail=response)
 
             return response
+        except DBAPIError as e:
+            handle_error(e)
+            raise RuntimeError("Este punto nunca se alcanza")
+
+    async def get_all_location_catalog(self) -> list[SedeDomain]:
+
+        stmt = text(
+            """
+            SELECT * FROM location_sp_get_all_sedes_ordered();
+            """
+        )
+
+        try:
+            result = await self._uow.session.execute(stmt)
+            records = result.fetchall()
+            sedes_list: list[SedeDomain] = []
+
+            for record in records:
+
+                sede = SedeDomain(
+                    id=record.id,
+                    nombre_sede=record.nombre_sede,
+                    telefono_sede=record.telefono_sede,
+                    direccion_sede=record.direccion_sede,
+                    insert_date=record.insert_date,
+                    update_date=record.update_date,
+                    user_create=record.user_create,
+                    user_modify=record.user_modify,
+                    file_id=record.file_id,
+                    review_location=record.review_location,
+                    status=True,
+                )
+                sedes_list.append(sede)
+
+            return sedes_list
         except DBAPIError as e:
             handle_error(e)
             raise RuntimeError("Este punto nunca se alcanza")

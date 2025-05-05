@@ -1,13 +1,16 @@
 from typing import Optional
 
 from sqlalchemy import text
-from app.constants import uow_var
+from sqlalchemy.exc import DBAPIError
 
+from app.constants import uow_var
 from app.modules.services.domain.entities.category_domain import CategoryEntity
-from app.modules.services.domain.repositories.category_repository import CategoryRepository
+from app.modules.services.domain.entities.service_domain import ServiceEntity
+from app.modules.services.domain.repositories.category_repository import (
+    CategoryRepository,
+)
 from app.modules.share.infra.persistence.unit_of_work import UnitOfWork
 from app.modules.share.utils.handle_dbapi_error import handle_error
-from sqlalchemy.exc import DBAPIError
 
 
 class CategoryImplementationRepository(CategoryRepository):
@@ -20,75 +23,79 @@ class CategoryImplementationRepository(CategoryRepository):
 
     async def create_category(
         self,
-        name_category: str,
+        sede_id: int,
+        category_name: str,
+        description: Optional[str],
         user_create: str,
-        description_category: Optional[str]
-    ) -> int:
+    ) -> str:
 
         sql_query = """
-            SELECT create_category(
-                :p_name_category,
-                :p_description_category,
+            SELECT services_sp_create_category(
+                :p_sede_id,
+                :p_category_name,
+                :p_description,
                 :p_user_create
             );
         """
 
         params = {
-            "p_name_category": name_category,
-            "p_description_category": description_category,
+            "p_sede_id": sede_id,
+            "p_category_name": category_name,
+            "p_description": description,
             "p_user_create": user_create,
         }
 
         try:
-            result = await self._uow.session.execute(
-                text(sql_query),
-                params
-            )
+            result = await self._uow.session.execute(text(sql_query), params)
 
-            category_id: int = result.scalar_one()
-            return category_id
+            category_res: str = result.scalar_one()
+            return category_res
 
         except DBAPIError as e:
             handle_error(e)
             raise RuntimeError("Este punto nunca se alcanza")
 
-    async def find_categories(self) -> list[CategoryEntity]:
-        """
-        Obtiene todas las categorías activas desde la base de datos
-        llamando a la función get_category().
-        """
-        sql_query = text("SELECT get_category();")
+    async def find_categories(self, location: int) -> list[CategoryEntity]:
+        sql_query = text("SELECT services_sp_get_categories_with_services(:p_sede_id);")
+        params = {"p_sede_id": location}
 
         try:
-            result = await self._uow.session.execute(sql_query)
-            # scalar_one() obtiene el valor de la primera columna de la única fila esperada.
-            # El driver (ej. asyncpg) usualmente convierte el JSON a una estructura Python (list[dict]).
-            categories_data = result.scalar_one()
+            result = await self._uow.session.execute(sql_query, params)
+            json_result = result.scalar_one()
 
-            # Si la función devuelve '[]' (un array JSON vacío), categories_data será una lista vacía.
-            # Si no devuelve filas (lo cual no debería pasar por cómo está definida la función),
-            # scalar_one() lanzaría una excepción NoResultFound, que sería capturada abajo.
-            if not categories_data:
+            if not json_result:
                 return []
 
-            # Ahora categories_data es la lista de diccionarios que esperas.
-            # Itera sobre esta lista para crear tus entidades.
-            return [
-                CategoryEntity(
-                    # Accede a las claves dentro de cada diccionario 'category' en la lista
-                    id_category=category["id"],
-                    name_category=category["name_category"],
-                    description_category=category["description_category"],
-                    # Puede que necesites convertir las fechas/horas si CategoryEntity espera datetimes
-                    # y el driver las devuelve como strings (aunque usualmente las convierte)
-                    insert_date=category["insert_date"],
-                    update_date=category["update_date"],
-                    user_create=category["user_create"],
-                    user_modify=category["user_modify"],
-                )
-                for category in categories_data
-            ]
+            categories: list[CategoryEntity] = []
+            for category_data in json_result:
+                services_list: list[ServiceEntity] = []
+                for service_data in category_data.get("services", []):
+                    service = ServiceEntity(
+                        service_id=service_data["serviceId"],
+                        service_name=service_data["serviceName"],
+                        duration_minutes=service_data.get("durationMinutes"),
+                        price=service_data["price"],
+                        description=service_data.get("description"),
+                        insert_date=service_data["insertDate"],
+                        update_date=service_data.get("updateDate"),
+                        user_create=service_data["userCreate"],
+                        user_modify=service_data.get("userModify"),
+                    )
+                    services_list.append(service)
 
+                category = CategoryEntity(
+                    category_id=category_data["categoryId"],
+                    category_name=category_data["categoryName"],
+                    description=category_data.get("description"),
+                    insert_date=category_data["insertDate"],
+                    update_date=category_data.get("updateDate"),
+                    user_create=category_data["userCreate"],
+                    user_modify=category_data.get("userModify"),
+                    services=services_list,
+                )
+                categories.append(category)
+
+            return categories
         except DBAPIError as e:
             handle_error(e)
             raise RuntimeError("Este punto nunca se alcanza")

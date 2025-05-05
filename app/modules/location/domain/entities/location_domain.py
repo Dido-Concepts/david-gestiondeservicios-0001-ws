@@ -36,6 +36,7 @@ class LocationResponse:
     direccion_sede: str
     insert_date: datetime
     location_review: str
+    status: bool
     url: Optional[str] = None
     filename: Optional[str] = None
     content_type: Optional[str] = None
@@ -52,3 +53,19 @@ class LocationInfoResponse:
     insert_date: datetime
     file: FileResponse
     schedules: list[ScheduleRequestDomain]
+    status: bool
+
+
+@dataclass
+class SedeDomain:
+    id: int
+    nombre_sede: str
+    telefono_sede: Optional[str]
+    direccion_sede: Optional[str]
+    insert_date: datetime
+    update_date: Optional[datetime]
+    user_create: str
+    user_modify: Optional[str]
+    file_id: Optional[int]
+    review_location: str
+    status: bool
