@@ -127,7 +127,7 @@ class CustomerController:
     async def create_customer(
             self, 
             request: CreateCustomerRequest, 
-            current_user: UserAuth = Depends(get_current_user)) -> str:
+            current_user: UserAuth = Depends(get_current_user)) -> int:
 
         if not current_user.email:
             raise ValueError("User email not found in token")
