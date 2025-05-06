@@ -28,7 +28,6 @@ class CategoryImplementationRepository(CategoryRepository):
         description: Optional[str],
         user_create: str,
     ) -> str:
-
         sql_query = """
             SELECT services_sp_create_category(
                 :p_sede_id,
@@ -96,6 +95,66 @@ class CategoryImplementationRepository(CategoryRepository):
                 categories.append(category)
 
             return categories
+        except DBAPIError as e:
+            handle_error(e)
+            raise RuntimeError("Este punto nunca se alcanza")
+
+    async def update_category(
+        self,
+        category_id: int,
+        sede_id: int,
+        category_name: str,
+        description: str | None,
+        user_update: str,
+    ) -> str:
+        sql_query = text(
+            """
+            SELECT services_sp_update_category(
+                :category_id,
+                :sede_id,
+                :category_name,
+                :description,
+                :user_update
+            ) AS result;
+            """
+        )
+
+        params = {
+            "category_id": category_id,
+            "sede_id": sede_id,
+            "category_name": category_name,
+            "description": description,
+            "user_update": user_update,
+        }
+
+        try:
+            result = await self._uow.session.execute(sql_query, params)
+
+            category_res: str = result.scalar_one()
+            return category_res
+        except DBAPIError as e:
+            handle_error(e)
+            raise RuntimeError("Este punto nunca se alcanza")
+
+    async def delete_category(self, category_id: int, user_delete: str) -> bool:
+        sql_query = text(
+            """
+            SELECT services_sp_annul_category(
+                :category_id,
+                :user_delete
+            ) AS result;
+        """
+        )
+
+        params = {
+            "category_id": category_id,
+            "user_delete": user_delete,
+        }
+
+        try:
+            result = await self._uow.session.execute(sql_query, params)
+            category_res: bool = result.scalar_one()
+            return category_res
         except DBAPIError as e:
             handle_error(e)
             raise RuntimeError("Este punto nunca se alcanza")
