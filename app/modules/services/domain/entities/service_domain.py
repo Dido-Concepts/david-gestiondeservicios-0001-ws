@@ -7,6 +7,7 @@ from typing import Optional
 class ServiceEntity:
     service_id: int
     service_name: str
+    category_id: int
     duration_minutes: Optional[float]
     price: float
     description: Optional[str]

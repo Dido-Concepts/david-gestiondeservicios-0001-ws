@@ -22,6 +22,7 @@ class GetCategoriesQuery(BaseModel):
 class ServiceResponse(BaseModel):
     service_id: int
     service_name: str
+    category_id: int
     duration_minutes: Optional[float] = None
     price: float
     description: Optional[str] = None
@@ -92,6 +93,7 @@ class GetCategoriesQueryHandler(
                     ServiceResponse(
                         service_id=service.service_id,
                         service_name=service.service_name,
+                        category_id=service.category_id,
                         duration_minutes=service.duration_minutes,
                         price=service.price,
                         description=service.description,
