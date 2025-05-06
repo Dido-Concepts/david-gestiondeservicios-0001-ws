@@ -18,6 +18,9 @@ from app.modules.location.presentation.routes.v1.location_v1_routes import (
 from app.modules.services.presentation.routes.v1.category_v1_routes import (
     CategoryController,
 )
+from app.modules.services.presentation.routes.v1.service_v1_routes import (
+    ServiceController,
+)
 from app.modules.share.infra.di_config import AppModule
 from app.modules.share.infra.exception_handlers import (
     generic_exception_handler,
@@ -53,6 +56,7 @@ def create_app(mediator: Optional[Mediator] = None) -> FastAPI:
     auth_controller = AuthController(mediator)
     customer_controller = CustomerController(mediator)
     category_controller = CategoryController(mediator)
+    service_controller = ServiceController(mediator)
 
     app.include_router(user_controller.router, prefix=prefix_v1, tags=["User"])
     app.include_router(role_controller.router, prefix=prefix_v1, tags=["Role"])
@@ -60,6 +64,7 @@ def create_app(mediator: Optional[Mediator] = None) -> FastAPI:
     app.include_router(location_controller.router, prefix=prefix_v1, tags=["Location"])
     app.include_router(customer_controller.router, prefix=prefix_v1, tags=["Customer"])
     app.include_router(category_controller.router, prefix=prefix_v1, tags=["Service"])
+    app.include_router(service_controller.router, prefix=prefix_v1, tags=["Service"])
 
     return app
 
