@@ -4,7 +4,10 @@ from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
 from app.constants import uow_var
-from app.modules.services.domain.entities.category_domain import CategoryEntity
+from app.modules.services.domain.entities.category_domain import (
+    CategoryCatalogEntity,
+    CategoryEntity,
+)
 from app.modules.services.domain.entities.service_domain import ServiceEntity
 from app.modules.services.domain.repositories.category_repository import (
     CategoryRepository,
@@ -72,6 +75,7 @@ class CategoryImplementationRepository(CategoryRepository):
                     service = ServiceEntity(
                         service_id=service_data["serviceId"],
                         service_name=service_data["serviceName"],
+                        category_id=service_data["categoryId"],
                         duration_minutes=service_data.get("durationMinutes"),
                         price=service_data["price"],
                         description=service_data.get("description"),
@@ -155,6 +159,40 @@ class CategoryImplementationRepository(CategoryRepository):
             result = await self._uow.session.execute(sql_query, params)
             category_res: bool = result.scalar_one()
             return category_res
+        except DBAPIError as e:
+            handle_error(e)
+            raise RuntimeError("Este punto nunca se alcanza")
+
+    async def get_all_categories_catalog(
+        self, sede_id: int
+    ) -> list[CategoryCatalogEntity]:
+        sql_query = text(
+            """
+            SELECT * FROM services_sp_get_all_categories_catalog(:p_sede_id);
+            """
+        )
+
+        params = {"p_sede_id": sede_id}
+
+        try:
+            result = await self._uow.session.execute(sql_query, params)
+            categories = []
+
+            for row in result:
+                category = CategoryCatalogEntity(
+                    category_id=row.category_id,
+                    sede_id=row.sede_id,
+                    category_name=row.category_name,
+                    description=row.description,
+                    insert_date=row.insert_date,
+                    update_date=row.update_date,
+                    user_create=row.user_create,
+                    user_modify=row.user_modify,
+                )
+                categories.append(category)
+
+            return categories
+
         except DBAPIError as e:
             handle_error(e)
             raise RuntimeError("Este punto nunca se alcanza")

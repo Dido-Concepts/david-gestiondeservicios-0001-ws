@@ -1,7 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from app.modules.services.domain.entities.category_domain import CategoryEntity
+from app.modules.services.domain.entities.category_domain import (
+    CategoryCatalogEntity,
+    CategoryEntity,
+)
 
 
 class CategoryRepository(ABC):
@@ -32,4 +35,10 @@ class CategoryRepository(ABC):
 
     @abstractmethod
     async def delete_category(self, category_id: int, user_delete: str) -> bool:
+        pass
+
+    @abstractmethod
+    async def get_all_categories_catalog(
+        self, sede_id: int
+    ) -> list[CategoryCatalogEntity]:
         pass

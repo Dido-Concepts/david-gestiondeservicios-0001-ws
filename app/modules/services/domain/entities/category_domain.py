@@ -15,3 +15,15 @@ class CategoryEntity:
     update_date: Optional[datetime]
     user_create: str
     user_modify: Optional[str]
+
+
+@dataclass
+class CategoryCatalogEntity:
+    category_id: int
+    sede_id: int
+    category_name: str
+    description: Optional[str]
+    insert_date: datetime
+    update_date: Optional[datetime]
+    user_create: str
+    user_modify: Optional[str]

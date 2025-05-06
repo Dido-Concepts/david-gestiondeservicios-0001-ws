@@ -27,6 +27,10 @@ from app.modules.services.application.request.create_category_request import (
 from app.modules.services.application.request.update_category_request import (
     UpdateCategoryRequest,
 )
+from app.modules.services.application.queries.get_all_categories_catalog.get_all_categories_catalog_handler import (
+    GetAllCategoriesCatalogQuery,
+    GetAllCategoriesCatalogQueryResponse,
+)
 
 
 class CategoryController:
@@ -55,6 +59,11 @@ class CategoryController:
             "/category/{category_id}",
             dependencies=[Depends(permission_required(roles=["admin"]))],
         )(self.delete_category)
+
+        self.router.get(
+            "/category/catalog/{sede_id}",
+            dependencies=[Depends(permission_required(roles=["admin"]))],
+        )(self.get_all_categories_catalog)
 
     async def create_category(
         self,
@@ -114,4 +123,14 @@ class CategoryController:
         )
 
         result: bool = await self.mediator.send_async(command)
+        return result
+
+    async def get_all_categories_catalog(
+        self,
+        sede_id: Annotated[int, Path()],
+    ) -> list[GetAllCategoriesCatalogQueryResponse]:
+        query = GetAllCategoriesCatalogQuery(sede_id=sede_id)
+        result: list[
+            GetAllCategoriesCatalogQueryResponse
+        ] = await self.mediator.send_async(query)
         return result
