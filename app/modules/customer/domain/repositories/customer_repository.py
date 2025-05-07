@@ -114,3 +114,4 @@ class CustomerRepository(ABC):
                  (ej: "Cliente con ID: X marcado como anulado correctamente.").
         """
         pass  # Indica que la implementación real debe ser proporcionada por una subclase.
+#

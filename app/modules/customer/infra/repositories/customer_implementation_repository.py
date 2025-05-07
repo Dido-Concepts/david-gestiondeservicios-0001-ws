@@ -290,3 +290,4 @@ class CustomerImplementationRepository(CustomerRepository):
             handle_error(e)
             # Esta línea teóricamente no se alcanza si handle_error siempre levanta una excepción.
             raise RuntimeError("Este punto nunca se alcanza")
+#
