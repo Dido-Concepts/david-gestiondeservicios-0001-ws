@@ -1,4 +1,3 @@
-# customer_repository.py
 from abc import ABC, abstractmethod
 from typing import Optional
 from datetime import date
@@ -34,7 +33,7 @@ class CustomerRepository(ABC):
 
     @abstractmethod
     async def find_customers(
-        self, page_index: int, page_size: int
+        self, page_index: int, page_size: int, query: Optional[str] = None
     ) -> ResponseList[CustomerEntity]:
         """
         Método abstracto para buscar clientes con paginación.
@@ -115,3 +114,4 @@ class CustomerRepository(ABC):
                  (ej: "Cliente con ID: X marcado como anulado correctamente.").
         """
         pass  # Indica que la implementación real debe ser proporcionada por una subclase.
+#

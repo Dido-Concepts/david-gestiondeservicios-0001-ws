@@ -45,9 +45,8 @@ from app.modules.customer.application.commands.change_status_customer.change_sta
 
 
 # --- Importaciones Compartidas ---
-from app.modules.share.aplication.view_models.paginated_items_view_model import (
-    PaginatedItemsViewModel,  # Si se usa en GET
-)
+from app.modules.customer.application.request.create_customer_request import CreateCustomerRequest
+from app.modules.share.aplication.view_models.paginated_items_view_model import PaginatedItemsViewModel  # Si se usa en GET
 
 
 # Modelo Pydantic para el Payload de Actualización (mantenido si existe la ruta de update)
@@ -125,17 +124,14 @@ class CustomerController:
             dependencies=[Depends(permission_required(roles=["admin"]))]  # Solo administradores pueden anular clientes
         )(self.delete_customer)  # Asocia la ruta al nuevo método handler 'delete_customer'
 
-    # --- Métodos Handler Existentes (create_customer, get_customers, change_customer_details) ---
-    # Se asume que estos métodos ya existen en tu clase
     async def create_customer(
-        self,
-        request: CreateCustomerCommand,
-        current_user: UserAuth = Depends(get_current_user),
-    ) -> int:
-        # ... (implementación existente)
-        # Dummy implementation for completeness if needed:
+            self, 
+            request: CreateCustomerRequest, 
+            current_user: UserAuth = Depends(get_current_user)) -> int:
+
         if not current_user.email:
-            raise HTTPException(status_code=400, detail="...")
+            raise ValueError("User email not found in token")
+        
         command = CreateCustomerCommand(  # Ajusta según la definición real
             name_customer=request.name_customer,
             user_create=current_user.email,

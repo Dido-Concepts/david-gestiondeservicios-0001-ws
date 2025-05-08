@@ -25,7 +25,7 @@ class GetAllCustomerQuery(BaseModel):
     """
     page_index: int = Field(1, ge=1, description="Número de página a recuperar (base 1)")
     page_size: int = Field(10, ge=1, description="Número de clientes por página")
-
+    query: Optional[str] = Field(None, description="Nombre del cliente a buscar")
 
 # --- Definición del View Model para un Ítem de la Respuesta ---
 class GetAllCustomerQueryResponse(BaseModel):
@@ -86,6 +86,7 @@ class GetAllCustomerQueryHandler(
         repo_response = await self.customer_repository.find_customers(
             page_index=query.page_index,
             page_size=query.page_size,
+            query=query.query,
         )
         # repo_response es de tipo ResponseList[CustomerResponse]
 
@@ -113,6 +114,7 @@ class GetAllCustomerQueryHandler(
             page_size=query.page_size,  # Tamaño de página solicitado
             page_count=repo_response.total_pages,  # Total de páginas calculado por el repositorio
             total=repo_response.total_items,  # Total de ítems calculado por el repositorio
+            query=query.query,
         )
 
         # 4. Construye el objeto final PaginatedItemsViewModel que se devolverá
@@ -122,3 +124,4 @@ class GetAllCustomerQueryHandler(
         )
 
         return pagination_response
+#
