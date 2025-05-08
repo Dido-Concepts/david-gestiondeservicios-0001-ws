@@ -33,7 +33,7 @@ class CustomerRepository(ABC):
 
     @abstractmethod
     async def find_customers(
-        self, page_index: int, page_size: int
+        self, page_index: int, page_size: int, query: Optional[str] = None
     ) -> ResponseList[CustomerEntity]:
         """
         Método abstracto para buscar clientes con paginación.

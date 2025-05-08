@@ -80,7 +80,7 @@ class CustomerImplementationRepository(CustomerRepository):
             raise RuntimeError("Este punto nunca se alcanza")  # handle_error siempre levanta excepción
 
     async def find_customers(
-        self, page_index: int, page_size: int
+        self, page_index: int, page_size: int, query: Optional[str] = None
     ) -> (
         "ResponseList[CustomerEntity]"
     ):  # Usamos comillas si ResponseList no está importado globalmente
@@ -92,7 +92,7 @@ class CustomerImplementationRepository(CustomerRepository):
         from app.modules.share.domain.repositories.repository_types import ResponseList
 
         # Define la sentencia SQL para llamar a la función PostgreSQL
-        stmt = text("SELECT get_customers(:page_index, :page_size)")
+        stmt = text("SELECT get_customers(:page_index, :page_size, :search_name_query)")
         try:
             # Ejecuta la sentencia
             result = await self._uow.session.execute(
@@ -100,6 +100,7 @@ class CustomerImplementationRepository(CustomerRepository):
                 {
                     "page_index": page_index,
                     "page_size": page_size,
+                    "search_name_query": query
                 },
             )
             # Obtiene el resultado JSON devuelto por la función almacenada
