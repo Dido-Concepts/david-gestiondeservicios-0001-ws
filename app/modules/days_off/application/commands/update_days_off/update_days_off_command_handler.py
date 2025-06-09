@@ -1,8 +1,10 @@
+# update_days_off_command_handler.py
+
 import re
 from datetime import date, time
 from typing import Optional
 from mediatr import Mediator
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 # Importaciones necesarias del proyecto
 from app.constants import injector_var
@@ -34,54 +36,6 @@ class UpdateDaysOffCommand(BaseModel):
             raise ValueError("user_modify no puede estar vacío")
         return v.strip()
 
-    @field_validator("fecha_fin")
-    def validate_fecha_fin(cls, v: Optional[date], info) -> Optional[date]:
-        """Valida que fecha_fin sea posterior o igual a fecha_inicio si ambas están presentes."""
-        if v is None:
-            return v
-        
-        fecha_inicio = info.data.get("fecha_inicio")
-        if fecha_inicio and v < fecha_inicio:
-            raise ValueError("fecha_fin no puede ser anterior a fecha_inicio")
-        return v
-
-    @field_validator("hora_fin")
-    def validate_hora_fin(cls, v: Optional[time], info) -> Optional[time]:
-        """
-        Valida que si se proporciona hora_fin, también debe proporcionarse hora_inicio
-        y hora_fin debe ser posterior a hora_inicio.
-        """
-        if v is None:
-            return v
-        
-        hora_inicio = info.data.get("hora_inicio")
-        
-        # Si se proporciona hora_fin pero no hora_inicio
-        if hora_inicio is None:
-            raise ValueError("Si se proporciona hora_fin, también debe proporcionarse hora_inicio")
-        
-        # Si ambas están proporcionadas, hora_fin debe ser > hora_inicio
-        if v <= hora_inicio:
-            raise ValueError("hora_fin debe ser posterior a hora_inicio")
-        
-        return v
-
-    @field_validator("hora_inicio")
-    def validate_hora_inicio(cls, v: Optional[time], info) -> Optional[time]:
-        """
-        Valida que si se proporciona hora_inicio, también debe proporcionarse hora_fin.
-        """
-        if v is None:
-            return v
-        
-        hora_fin = info.data.get("hora_fin")
-        
-        # Si se proporciona hora_inicio pero no hora_fin
-        if hora_fin is None:
-            raise ValueError("Si se proporciona hora_inicio, también debe proporcionarse hora_fin")
-        
-        return v
-
     @field_validator("motivo")
     def validate_motivo(cls, v: Optional[str]) -> Optional[str]:
         """Valida que motivo no sea solo espacios en blanco si se proporciona."""
@@ -89,6 +43,24 @@ class UpdateDaysOffCommand(BaseModel):
             raise ValueError("motivo no puede contener solo espacios")
         
         return v.strip() if v else None
+
+    @model_validator(mode='after')
+    def validate_dates_and_times(self):
+        """Valida la lógica entre fechas y horas."""
+        # Validar lógica de fechas
+        if self.fecha_inicio and self.fecha_fin and self.fecha_fin < self.fecha_inicio:
+            raise ValueError("fecha_fin no puede ser anterior a fecha_inicio")
+        
+        # Validar lógica de horas - deben proporcionarse ambas o ninguna
+        if (self.hora_inicio is not None) != (self.hora_fin is not None):
+            raise ValueError("Si se proporciona hora_inicio u hora_fin, ambas deben proporcionarse")
+        
+        # Si ambas horas están presentes, hora_fin debe ser posterior a hora_inicio
+        if self.hora_inicio is not None and self.hora_fin is not None:
+            if self.hora_fin <= self.hora_inicio:
+                raise ValueError("hora_fin debe ser posterior a hora_inicio")
+        
+        return self
 
 
 # --- Handler ---
@@ -135,4 +107,4 @@ class UpdateDaysOffCommandHandler(IRequestHandler[UpdateDaysOffCommand, str]):
 
         # Devuelve el resultado (mensaje de texto) que proviene del repositorio
         # (que a su vez, lo obtuvo del stored procedure).
-        return result 
+        return result

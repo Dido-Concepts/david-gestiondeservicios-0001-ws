@@ -12,6 +12,7 @@ from app.modules.auth.presentation.routes.v1.auth_v1_routes import AuthControlle
 from app.modules.customer.presentation.routes.v1.customer_v1_routes import (
     CustomerController,
 )
+from app.modules.days_off.presentation.routes.v1.days_off_v1_routes import DaysOffController
 from app.modules.location.presentation.routes.v1.location_v1_routes import (
     LocationController,
 )
@@ -28,8 +29,10 @@ from app.modules.share.infra.exception_handlers import (
     value_error_handler,
 )
 from app.modules.share.infra.persistence.unit_of_work import UnitOfWork
+from app.modules.shifts.presentation.routes.v1.shifts_v1_routes import ShiftsController
 from app.modules.user.presentation.routes.v1.role_v1_routes import RoleController
 from app.modules.user.presentation.routes.v1.user_v1_routes import UserController
+from app.modules.user_locations.presentation.routes.v1.user_locations__v1_routes import UserLocationsController
 
 
 def create_app(mediator: Optional[Mediator] = None) -> FastAPI:
@@ -57,6 +60,9 @@ def create_app(mediator: Optional[Mediator] = None) -> FastAPI:
     customer_controller = CustomerController(mediator)
     category_controller = CategoryController(mediator)
     service_controller = ServiceController(mediator)
+    user_location_controller = UserLocationsController(mediator)
+    days_off_controller = DaysOffController(mediator)
+    shifts_controller = ShiftsController(mediator)
 
     app.include_router(user_controller.router, prefix=prefix_v1, tags=["User"])
     app.include_router(role_controller.router, prefix=prefix_v1, tags=["Role"])
@@ -64,7 +70,10 @@ def create_app(mediator: Optional[Mediator] = None) -> FastAPI:
     app.include_router(location_controller.router, prefix=prefix_v1, tags=["Location"])
     app.include_router(customer_controller.router, prefix=prefix_v1, tags=["Customer"])
     app.include_router(category_controller.router, prefix=prefix_v1, tags=["Service"])
-    app.include_router(service_controller.router, prefix=prefix_v1, tags=["Service"])
+    app.include_router(service_controller.router, prefix=prefix_v1, tags=["Service"])   
+    app.include_router(user_location_controller.router, prefix=prefix_v1, tags=["User-Location"])
+    app.include_router(days_off_controller.router, prefix=prefix_v1, tags=["Days-Off"])
+    app.include_router(shifts_controller.router, prefix=prefix_v1, tags=["Shifts"])
 
     return app
 

@@ -9,20 +9,19 @@ from sqlalchemy.exc import DBAPIError
 
 # Asumiendo que estas rutas de importación son correctas para tu proyecto
 from app.constants import uow_var
-from app.modules.days_off.domain.entities.days_off_domain import DaysOffEntity
 
 # Importa la interfaz abstracta que esta clase implementará
-from app.modules.days_off.domain.repositories.days_off_repository import (
-    DaysOffRepository,
+from app.modules.shifts.domain.repositories.shifts_repository import (
+    ShiftsRepository,
 )
 from app.modules.share.domain.repositories.repository_types import ResponseList
 from app.modules.share.infra.persistence.unit_of_work import UnitOfWork
 from app.modules.share.utils.handle_dbapi_error import handle_error
 
 
-class DaysOffImplementationRepository(DaysOffRepository):
+class ShiftsImplementationRepository(ShiftsRepository):
     """
-    Implementación concreta de la interfaz DaysOffRepository usando SQLAlchemy
+    Implementación concreta de la interfaz ShiftsRepository usando SQLAlchemy
     y un patrón Unit of Work, interactuando con una base de datos PostgreSQL.
     Esta clase contiene el código real para interactuar con la base de datos.
     """
@@ -38,38 +37,34 @@ class DaysOffImplementationRepository(DaysOffRepository):
             # (por ejemplo, fuera de un request de FastAPI si se gestiona por middleware)
             raise RuntimeError("UnitOfWork no encontrado en el contexto")
 
-    async def create_day_off(
+    async def create_shift(
         self,
         user_id: int,
-        tipo_dia_libre_maintable_id: int,
-        fecha_inicio: date,
-        fecha_fin: date,
-        user_create: str,
-        hora_inicio: Optional[time] = None,
-        hora_fin: Optional[time] = None,
-        motivo: Optional[str] = None
+        sede_id: int,
+        fecha_turno: date,
+        hora_inicio: time,
+        hora_fin: time,
+        user_create: str
     ) -> str:
         """
-        Crea un nuevo período de día libre llamando al procedimiento almacenado 
-        'days_off_sp_create_day_off' en la base de datos PostgreSQL.
+        Crea un nuevo turno de trabajo llamando al procedimiento almacenado 
+        'shifts_sp_create_shifts' en la base de datos PostgreSQL.
         """
-        # Llama a la función de PostgreSQL 'days_off_sp_create_day_off'
+        # Llama a la función de PostgreSQL 'shifts_sp_create_shifts'
         sql_query = """
-            SELECT days_off_sp_create_day_off(
-                :p_user_id, :p_tipo_dia_libre_maintable_id, :p_fecha_inicio,
-                :p_fecha_fin, :p_user_create, :p_hora_inicio, :p_hora_fin, :p_motivo
+            SELECT shifts_sp_create_shifts(
+                :p_user_id, :p_sede_id, :p_fecha_turno,
+                :p_hora_inicio, :p_hora_fin, :p_user_create
             );
         """
         # Mapea los argumentos de la función Python a los parámetros de la consulta SQL
         params = {
             "p_user_id": user_id,
-            "p_tipo_dia_libre_maintable_id": tipo_dia_libre_maintable_id,
-            "p_fecha_inicio": fecha_inicio,
-            "p_fecha_fin": fecha_fin,
-            "p_user_create": user_create,
+            "p_sede_id": sede_id,
+            "p_fecha_turno": fecha_turno,
             "p_hora_inicio": hora_inicio,
             "p_hora_fin": hora_fin,
-            "p_motivo": motivo,
+            "p_user_create": user_create,
         }
         try:
             # Ejecuta la consulta SQL dentro de la sesión de la Unit of Work actual
@@ -80,13 +75,23 @@ class DaysOffImplementationRepository(DaysOffRepository):
             # Verifica si la respuesta indica un error conocido devuelto por la función
             if response.startswith("Error:"):
                 if "does not exist or is not active" in response:
-                    # Si el usuario no existe o no está activo, lanza un error HTTP 404 (Not Found)
-                    raise HTTPException(status_code=404, detail=response)
-                elif "is not a valid, active type" in response:
-                    # Si el tipo de día libre no es válido, lanza un error HTTP 400 (Bad Request)
+                    if "User ID" in response:
+                        # Si el usuario no existe o no está activo, lanza un error HTTP 404 (Not Found)
+                        raise HTTPException(status_code=404, detail=response)
+                    elif "Sede ID" in response:
+                        # Si la sede no existe o no está activa, lanza un error HTTP 404 (Not Found)
+                        raise HTTPException(status_code=404, detail=response)
+                elif "End time" in response and "must be after start time" in response:
+                    # Si la hora de fin no es posterior a la hora de inicio, lanza un error HTTP 400 (Bad Request)
                     raise HTTPException(status_code=400, detail=response)
-                elif "overlaps with an existing" in response:
-                    # Si hay conflicto con otro día libre o turno, lanza un error HTTP 409 (Conflict)
+                elif "is not actively assigned to Sede" in response:
+                    # Si el usuario no está asignado a la sede, lanza un error HTTP 400 (Bad Request)
+                    raise HTTPException(status_code=400, detail=response)
+                elif "overlaps with an existing day off" in response:
+                    # Si hay conflicto con un día libre existente, lanza un error HTTP 409 (Conflict)
+                    raise HTTPException(status_code=409, detail=response)
+                elif "overlaps with another existing shift" in response:
+                    # Si hay conflicto con otro turno existente, lanza un error HTTP 409 (Conflict)
                     raise HTTPException(status_code=409, detail=response)
                 else:
                     # Para otros errores definidos en la función SQL, lanza un error HTTP 400 (Bad Request)
@@ -99,44 +104,35 @@ class DaysOffImplementationRepository(DaysOffRepository):
             handle_error(e)
             raise RuntimeError("Este punto nunca se alcanza")  # handle_error siempre levanta excepción
 
-    async def find_days_off(self, page_index: int, page_size: int, user_id: Optional[int] = None, fecha_inicio: Optional[date] = None, fecha_fin: Optional[date] = None) -> ResponseList[DaysOffEntity]:
-        raise NotImplementedError("Método no implementado aún")
-
-    async def update_day_off(
+    async def update_shift(
         self,
-        day_off_id: int,
+        shift_id: int,
         user_modify: str,
-        tipo_dia_libre_maintable_id: Optional[int] = None,
-        fecha_inicio: Optional[date] = None,
-        fecha_fin: Optional[date] = None,
+        fecha_turno: Optional[date] = None,
         hora_inicio: Optional[time] = None,
-        hora_fin: Optional[time] = None,
-        motivo: Optional[str] = None
+        hora_fin: Optional[time] = None
     ) -> str:
         """
-        Implementación concreta para actualizar los detalles de un día libre.
-        Llama al stored procedure 'days_off_sp_update_day_off' en PostgreSQL.
+        Implementación concreta para actualizar los detalles de un turno.
+        Llama al stored procedure 'shifts_sp_update_shift' en PostgreSQL.
         """
         # Sentencia SQL que llama a la función de PostgreSQL
         stmt = text(
             """
-            SELECT days_off_sp_update_day_off(
-                :p_day_off_id, :p_user_modify, :p_tipo_dia_libre_maintable_id,
-                :p_fecha_inicio, :p_fecha_fin, :p_hora_inicio, :p_hora_fin, :p_motivo
+            SELECT shifts_sp_update_shift(
+                :p_shift_id, :p_user_modify, :p_fecha_turno,
+                :p_hora_inicio, :p_hora_fin
             )
             """
         )
 
         # Diccionario con los parámetros para la función SQL
         params = {
-            "p_day_off_id": day_off_id,
+            "p_shift_id": shift_id,
             "p_user_modify": user_modify,
-            "p_tipo_dia_libre_maintable_id": tipo_dia_libre_maintable_id,
-            "p_fecha_inicio": fecha_inicio,
-            "p_fecha_fin": fecha_fin,
+            "p_fecha_turno": fecha_turno,
             "p_hora_inicio": hora_inicio,
             "p_hora_fin": hora_fin,
-            "p_motivo": motivo,
         }
 
         try:
@@ -148,16 +144,16 @@ class DaysOffImplementationRepository(DaysOffRepository):
             # Verifica si la respuesta indica un error conocido devuelto por la función
             if response.startswith("Error:"):
                 if "not found or is already annulled" in response:
-                    # Si el día libre no existe o ya está anulado, lanza un error HTTP 404 (Not Found)
+                    # Si el turno no existe o ya está anulado, lanza un error HTTP 404 (Not Found)
                     raise HTTPException(status_code=404, detail=response)
-                elif "is not a valid, active type" in response:
-                    # Si el tipo de día libre no es válido, lanza un error HTTP 400 (Bad Request)
-                    raise HTTPException(status_code=400, detail=response)
-                elif "cannot be before" in response or "must be after" in response or "must be provided" in response:
+                elif "must be after" in response or "End time" in response:
                     # Si hay errores de validación de fechas/horas, lanza un error HTTP 400 (Bad Request)
                     raise HTTPException(status_code=400, detail=response)
-                elif "overlaps with" in response:
-                    # Si hay conflicto con otro día libre o turno, lanza un error HTTP 409 (Conflict)
+                elif "overlaps with an existing day off" in response:
+                    # Si hay conflicto con un día libre, lanza un error HTTP 409 (Conflict)
+                    raise HTTPException(status_code=409, detail=response)
+                elif "overlaps with another existing shift" in response:
+                    # Si hay conflicto con otro turno, lanza un error HTTP 409 (Conflict)
                     raise HTTPException(status_code=409, detail=response)
                 else:
                     # Para otros errores definidos en la función SQL, lanza un error HTTP 400 (Bad Request)
@@ -170,18 +166,18 @@ class DaysOffImplementationRepository(DaysOffRepository):
             handle_error(e)
             raise RuntimeError("Este punto nunca se alcanza")  # handle_error siempre levanta excepción
 
-    async def delete_day_off(self, day_off_id: int, user_modify: str) -> str:
+    async def delete_shift(self, shift_id: int, user_modify: str) -> str:
         """
-        Implementación concreta para realizar la eliminación lógica de un día libre.
-        Llama a la función de base de datos 'days_off_sp_delete_day_off'
+        Implementación concreta para realizar la eliminación lógica de un turno.
+        Llama a la función de base de datos 'shifts_sp_delete_shift'
         y devuelve el mensaje resultante.
         """
-        # Define la sentencia SQL para llamar a la función PostgreSQL 'days_off_sp_delete_day_off'.
-        stmt = text("SELECT days_off_sp_delete_day_off(:p_day_off_id, :p_user_modify)")
+        # Define la sentencia SQL para llamar a la función PostgreSQL 'shifts_sp_delete_shift'.
+        stmt = text("SELECT shifts_sp_delete_shift(:p_shift_id, :p_user_modify)")
 
         # Prepara el diccionario de parámetros para la consulta SQL.
         params = {
-            "p_day_off_id": day_off_id,
+            "p_shift_id": shift_id,
             "p_user_modify": user_modify,
         }
 
@@ -196,7 +192,7 @@ class DaysOffImplementationRepository(DaysOffRepository):
             # Verifica si la respuesta de la función de base de datos indica un error específico.
             if response.startswith("Error:"):
                 if "not found" in response:
-                    # Si la función devuelve el error de día libre no encontrado,
+                    # Si la función devuelve el error de turno no encontrado,
                     # levantamos una excepción HTTP 404 (Not Found).
                     raise HTTPException(status_code=404, detail=response)
                 else:
@@ -204,8 +200,8 @@ class DaysOffImplementationRepository(DaysOffRepository):
                     raise HTTPException(status_code=400, detail=response)
 
             # Si la respuesta no indica un error manejado explícitamente (ej. es un mensaje de éxito
-            # como "Day off ID 123 for user 5 has been successfully annulled." o el informativo
-            # "Day off ID 123 for user 5 is already annulled. No action taken."), simplemente devolvemos el mensaje.
+            # como "Shift ID 123 for user 5 has been successfully annulled." o el informativo
+            # "Shift ID 123 for user 5 is already annulled. No action taken."), simplemente devolvemos el mensaje.
             return response
 
         except DBAPIError as e:
