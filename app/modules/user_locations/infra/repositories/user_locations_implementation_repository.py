@@ -18,6 +18,10 @@ from app.modules.user_locations.domain.repositories.user_locations_repository im
 # (Si tu módulo se llama diferente, por ejemplo 'assignments', cámbialo:
 #  from app.modules.assignments.domain.repositories.user_locations_repository import UserLocationsRepository)
 
+# Agrega esta importación junto con las otras
+from datetime import date
+from app.modules.user_locations.domain.entities.user_locations_domain import UserLocationEventEntity
+
 
 class UserLocationsImplementationRepository(UserLocationsRepository):
     """
@@ -134,3 +138,58 @@ class UserLocationsImplementationRepository(UserLocationsRepository):
             # Si 'handle_error' siempre levanta una excepción, la siguiente línea
             # teóricamente no se alcanzaría. Se incluye por completitud o como fallback.
             raise RuntimeError(f"Error de base de datos al desactivar la asignación del usuario {user_id} en la sede {sede_id}: {e}")
+
+    async def get_user_by_location(
+        self, 
+        sede_id: int, 
+        start_date: date, 
+        end_date: date
+    ) -> list[UserLocationEventEntity]:
+        """
+        Obtiene todos los usuarios asignados a una sede/ubicación junto con sus eventos
+        (turnos y días libres) en un rango de fechas específico.
+        
+        Llama al procedimiento almacenado 'user_locations_get_user_by_location'
+        que devuelve una tabla con información de usuarios y sus eventos.
+        """
+        sql_query = text(
+            """
+            SELECT * FROM user_locations_get_user_by_location(
+                :p_sede_id,
+                :p_start_date,
+                :p_end_date
+            );
+            """
+        )
+        
+        params = {
+            "p_sede_id": sede_id,
+            "p_start_date": start_date,
+            "p_end_date": end_date,
+        }
+
+        try:
+            result = await self._uow.session.execute(sql_query, params)
+            
+            user_events: list[UserLocationEventEntity] = []
+            
+            # El SP devuelve filas directamente, no JSON como en find_categories
+            for row in result:
+                user_event = UserLocationEventEntity(
+                    user_id=row.user_id,
+                    user_name=row.user_name,
+                    email=row.email,
+                    event_type=row.event_type,  # Puede ser None
+                    event_id=row.event_id,      # Puede ser None
+                    event_start_time=row.event_start_time,  # Puede ser None
+                    event_end_time=row.event_end_time,      # Puede ser None
+                    event_description=row.event_description, # Puede ser None
+                    event_sede_id=row.event_sede_id,        # Puede ser None
+                )
+                user_events.append(user_event)
+
+            return user_events
+            
+        except DBAPIError as e:
+            handle_error(e)
+            raise RuntimeError("Este punto nunca se alcanza")

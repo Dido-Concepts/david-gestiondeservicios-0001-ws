@@ -1,6 +1,10 @@
 # user_locations_repository.py
 
 from abc import ABC, abstractmethod
+from datetime import date
+
+from app.modules.user_locations.domain.entities.user_locations_domain import UserLocationEventEntity
+
 
 class UserLocationsRepository(ABC):
     """
@@ -66,5 +70,38 @@ class UserLocationsRepository(ABC):
             Un mensaje de texto (str) proveniente del procedimiento almacenado,
             indicando el resultado de la operación (ej. si se desactivó,
             si ya estaba inactiva, o si no se encontró).
+        """
+        pass  # La implementación concreta en una subclase llamará al SP
+
+    @abstractmethod
+    async def get_user_by_location(
+        self, 
+        sede_id: int, 
+        start_date: date, 
+        end_date: date
+    ) -> list[UserLocationEventEntity]:
+        """
+        Método abstracto para obtener usuarios con sus eventos (turnos y días libres) 
+        para una sede específica en un rango de fechas.
+
+        Este método se encarga de llamar al procedimiento almacenado
+        'user_locations_get_user_by_location' en la base de datos, el cual:
+        - Obtiene todos los usuarios activos asignados a la sede especificada.
+        - Combina la información con sus eventos (turnos y días libres) en el rango de fechas.
+        - Devuelve tanto usuarios con eventos como usuarios sin eventos en el período.
+
+        Args:
+            sede_id (int): El ID de la sede para filtrar los usuarios.
+            start_date (date): La fecha de inicio del rango de consulta.
+            end_date (date): La fecha de fin del rango de consulta.
+
+        Returns:
+            list[UserLocationEventEntity]: Lista de entidades que combinan información
+                                         de usuarios con sus eventos (turnos y días libres)
+                                         en el rango de fechas especificado para la sede.
+                                         Los usuarios sin eventos tendrán campos event_* en None.
+
+        Raises:
+            Exception: Si start_date > end_date (validación del SP).
         """
         pass  # La implementación concreta en una subclase llamará al SP

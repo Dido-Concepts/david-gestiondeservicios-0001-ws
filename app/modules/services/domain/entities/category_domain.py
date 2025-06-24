@@ -13,7 +13,7 @@ class CategoryEntity:
     services: list[ServiceEntity]
     insert_date: datetime
     update_date: Optional[datetime]
-    user_create: str
+    user_create: str 
     user_modify: Optional[str]
 
 
