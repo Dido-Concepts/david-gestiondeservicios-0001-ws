@@ -35,6 +35,17 @@ from app.modules.user_locations.application.commands.deactivate_user_locations.d
     DeactivateUserLocationCommand,
 )
 
+# --- Importaciones adicionales para Query Parameters ---
+from typing import Annotated
+from datetime import date
+from fastapi import Query, Path
+
+# --- Importación del Query Handler ---
+from app.modules.user_locations.application.queries.get_user_by_location.get_user_by_location_handler import (
+    GetUserByLocationQuery,
+    GetUserByLocationQueryResponse,
+)
+
 class UserLocationsController:
     """
     Controlador que agrupa las rutas de API (versión 1) relacionadas con
@@ -54,9 +65,7 @@ class UserLocationsController:
     def _add_routes(self) -> None:
         """
         Define y añade las rutas específicas de este controlador al router de FastAPI.
-        En este caso, solo añadiremos la ruta POST para asignar un usuario a una ubicación.
         """
-
         # --- Ruta POST para Asignar un Usuario a una Sede/Ubicación ---
         self.router.post(
             "/user-locations/assign", # La ruta completa será: POST /v1/user-locations/assign
@@ -87,6 +96,19 @@ class UserLocationsController:
         )(
             self.deactivate_user_location # Vincula esta ruta al método de abajo
         )
+
+        # --- Ruta GET para Obtener Usuarios por Ubicación con Eventos ---
+        self.router.get(
+            "/user-locations/{sede_id}/events",
+            description=(
+                "Obtiene todos los usuarios asignados a una sede específica "
+                "junto con sus eventos (turnos y días libres) en un rango de fechas. "
+                "Requiere permisos de administrador."
+            ),
+            dependencies=[
+                Depends(permission_required(roles=["admin"]))
+            ],
+        )(self.get_user_by_location)
 
     async def assign_user_to_location(
         self,
@@ -161,3 +183,32 @@ class UserLocationsController:
         )
         result_message: str = await self.mediator.send_async(command)
         return result_message
+
+    async def get_user_by_location(
+        self,
+        sede_id: Annotated[int, Path(description="ID de la sede/ubicación")],
+        start_date: Annotated[date, Query(description="Fecha de inicio del rango (YYYY-MM-DD)")],
+        end_date: Annotated[date, Query(description="Fecha de fin del rango (YYYY-MM-DD)")],
+    ) -> list[GetUserByLocationQueryResponse]:
+        """
+        Método que maneja las solicitudes GET a la ruta /v1/user-locations/{sede_id}/events.
+        
+        Obtiene todos los usuarios asignados a una sede específica junto con sus eventos
+        (turnos y días libres) dentro del rango de fechas proporcionado.
+        
+        Args:
+            sede_id: ID de la sede/ubicación de la cual obtener los usuarios
+            start_date: Fecha de inicio del rango de búsqueda
+            end_date: Fecha de fin del rango de búsqueda
+            
+        Returns:
+            Lista de usuarios con sus eventos en el rango de fechas especificado
+        """
+        query = GetUserByLocationQuery(
+            sede_id=sede_id,
+            start_date=start_date,
+            end_date=end_date
+        )
+        
+        result: list[GetUserByLocationQueryResponse] = await self.mediator.send_async(query)
+        return result
