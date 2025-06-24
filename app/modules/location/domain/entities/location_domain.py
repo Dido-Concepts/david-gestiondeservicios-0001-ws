@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from app.modules.share.domain.file.file_domain import FileResponse
+from app.modules.share.domain.file.file_domain import FileEntity, FileResponse
 
 
 class DayOfWeek(Enum):
@@ -69,3 +69,18 @@ class SedeDomain:
     file_id: Optional[int]
     review_location: str
     status: bool
+
+
+@dataclass
+class LocationEntity:
+    id: int
+    nombre_sede: str
+    telefono_sede: Optional[str]
+    direccion_sede: Optional[str]
+    insert_date: datetime
+    update_date: Optional[datetime]
+    user_create: str
+    user_modify: Optional[str]
+    review_location: str
+    status: bool
+    file: FileEntity
