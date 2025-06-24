@@ -196,6 +196,11 @@ class LocationController:
             },
         )(self.change_schedule_location)
 
+        self.router.get(
+            "/location-refac",
+            dependencies=[Depends(permission_required(roles=["admin"]))],
+        )(self.get_locations_refactor)
+
     async def create_location(
         self,
         name_location: Annotated[str, Form()],
@@ -206,7 +211,6 @@ class LocationController:
         location_review: Annotated[Optional[str], Form()] = None,
         current_user: UserAuth = Depends(get_current_user),
     ) -> int:
-
         if not current_user.email:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -229,10 +233,17 @@ class LocationController:
     async def get_locations(
         self, query_params: Annotated[FindAllLocationQuery, Query()]
     ) -> PaginatedItemsViewModel[FindAllLocationQueryResponse]:
+        result: PaginatedItemsViewModel[
+            FindAllLocationQueryResponse
+        ] = await self.mediator.send_async(query_params)
+        return result
 
-        result: PaginatedItemsViewModel[FindAllLocationQueryResponse] = (
-            await self.mediator.send_async(query_params)
-        )
+    async def get_locations_refactor(
+        self, query_params: Annotated[FindAllLocationQuery, Query()]
+    ) -> PaginatedItemsViewModel[FindAllLocationQueryResponse]:
+        result: PaginatedItemsViewModel[
+            FindAllLocationQueryResponse
+        ] = await self.mediator.send_async(query_params)
         return result
 
     async def get_location_info_id(
@@ -301,10 +312,9 @@ class LocationController:
         return result
 
     async def get_locations_catalog(self) -> list[GetAllLocationsCatalogQueryResponse]:
-
         query = GetAllLocationsCatalogQuery()
 
-        result: list[GetAllLocationsCatalogQueryResponse] = (
-            await self.mediator.send_async(query)
-        )
+        result: list[
+            GetAllLocationsCatalogQueryResponse
+        ] = await self.mediator.send_async(query)
         return result
