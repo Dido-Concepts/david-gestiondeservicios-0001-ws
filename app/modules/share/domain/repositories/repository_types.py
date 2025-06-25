@@ -9,3 +9,9 @@ class ResponseList(Generic[T]):
     data: List[T]
     total_pages: int
     total_items: int
+
+
+@dataclass
+class ResponseListRefactor(Generic[T]):
+    data: List[T]
+    total_items: int
