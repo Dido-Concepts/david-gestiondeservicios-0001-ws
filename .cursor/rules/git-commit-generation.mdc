@@ -73,6 +73,8 @@ El mensaje debe seguir el formato estándar de Conventional Commits.
 - ✅ Máximo 72 caracteres en header
 - ✅ Sin punto final en descripción
 - ✅ Body solo si se necesita explicar el "por qué"
+- ✅ **CRITICAL**: Cada línea del body máximo 100 caracteres
+- ✅ Usar saltos de línea para mantener límite de caracteres
 
 ### 6. Ejemplos para Este Proyecto (Compatible con Commitlint)
 **Correcto:**
@@ -95,7 +97,25 @@ El mensaje debe seguir el formato estándar de Conventional Commits.
 5. Verificar límite de caracteres
 6. Añadir body solo si es complejo
 
-### 8. Mensaje Final (Solo el mensaje, SIN comando)
+### 8. Manejo de Líneas Largas en Body
+Cuando el body exceda 100 caracteres por línea:
+- Dividir en múltiples líneas
+- Usar guiones para listas
+- Mantener contexto y legibilidad
+- Ejemplo correcto:
+```
+refactor(maintable): consolidar funcionalidad de categorías y servicios
+
+Refactorización mayor del módulo maintable para unificar el manejo de 
+categorías y servicios bajo una arquitectura más genérica y mantenible.
+
+Cambios principales:
+- Eliminadas clases específicas de Category y Service por implementación genérica
+- Consolidados repositorios específicos en maintable_repository genérico
+- Unificadas rutas de categorías y servicios en maintable_v1_routes
+```
+
+### 9. Mensaje Final (Solo el mensaje, SIN comando)
 Proporciona SOLO el mensaje de commit:
 ```
 tipo(ámbito): descripción
@@ -105,7 +125,7 @@ O con body si es necesario:
 ```
 tipo(ámbito): descripción
 
-Explicación del por qué
+Explicación del por qué (máximo 100 caracteres por línea)
 
 Closes #123
 ```
