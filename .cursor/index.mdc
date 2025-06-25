@@ -1,0 +1,260 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: "Reglas de Git Commits con Conventional Commits para el equipo de desarrollo"
+rule_type: "Always"
+---
+
+# Reglas de Cursor para Commits de Git
+
+## Formato de Commits CON ICONOS OBLIGATORIOS
+Siempre usa el formato de Conventional Commits CON ICONOS siguiendo la configuración de @commitlint/config-conventional:
+```
+<icono> <tipo>[ámbito opcional]: <descripción>
+
+[cuerpo opcional]
+
+[pie opcional]
+```
+
+## Tipos de Commit (basado en commitlint oficial):
+
+### ✨ feat
+- **Descripción**: A new feature (Una nueva funcionalidad)
+- **Uso**: Cuando añades nueva funcionalidad al código
+- **Ejemplo**: `feat(auth): add JWT token validation`
+
+### 🐛 fix
+- **Descripción**: A bug fix (Corrección de un error)
+- **Uso**: Cuando corriges un error o bug
+- **Ejemplo**: `fix(customer): resolve status update validation error`
+
+### 📚 docs
+- **Descripción**: Documentation only changes (Solo cambios en documentación)
+- **Uso**: Cuando solo modificas documentación
+- **Ejemplo**: `docs: update API endpoints documentation`
+
+### 💎 style
+- **Descripción**: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+- **Uso**: Cambios de formato que no afectan la lógica
+- **Ejemplo**: `style: fix code formatting and remove trailing spaces`
+
+### 📦 refactor
+- **Descripción**: A code change that neither fixes a bug nor adds a feature
+- **Uso**: Reestructuración de código sin cambiar funcionalidad
+- **Ejemplo**: `refactor(maintable): simplify repository implementation`
+
+### 🚀 perf
+- **Descripción**: A code change that improves performance
+- **Uso**: Mejoras de rendimiento
+- **Ejemplo**: `perf(database): optimize query execution time`
+
+### 🚨 test
+- **Descripción**: Adding missing tests or correcting existing tests
+- **Uso**: Añadir o corregir tests
+- **Ejemplo**: `test(services): add unit tests for category service`
+
+### 🛠 build
+- **Descripción**: Changes that affect the build system or external dependencies
+- **Uso**: Cambios en el sistema de build o dependencias
+- **Ejemplo**: `build: update Python dependencies to latest versions`
+
+### ⚙️ ci
+- **Descripción**: Changes to CI configuration files and scripts
+- **Uso**: Cambios en configuración de CI/CD
+- **Ejemplo**: `ci: add automated testing workflow`
+
+### ♻️ chore
+- **Descripción**: Other changes that don't modify src or test files
+- **Uso**: Tareas de mantenimiento general
+- **Ejemplo**: `chore: update gitignore and remove unused imports`
+
+### 🗑 revert
+- **Descripción**: Reverts a previous commit
+- **Uso**: Revertir un commit anterior
+- **Ejemplo**: `revert: undo changes in customer validation logic`
+
+## Ámbitos (Scopes) para este Proyecto:
+Basado en la estructura del proyecto, usa estos ámbitos cuando sea relevante:
+
+- **auth**: Autenticación y autorización
+- **customer**: Gestión de clientes  
+- **location**: Gestión de ubicaciones
+- **services**: Gestión de servicios y categorías
+- **maintable**: Tablas maestras y catálogos
+- **user**: Gestión de usuarios
+- **shifts**: Gestión de turnos de trabajo
+- **days_off**: Gestión de días libres
+- **user_locations**: Asignación usuario-ubicaciones
+- **share**: Utilidades y servicios compartidos
+- **config**: Configuración de la aplicación
+- **database**: Cambios en base de datos y migraciones
+- **api**: Endpoints y rutas de API
+
+## Reglas para el Subject (Descripción):
+1. **Máximo 50-72 caracteres**
+2. **Minúsculas**: No capitalizar la primera letra
+3. **Sin punto final**: No terminar con punto
+4. **Imperativo**: Usa verbos en presente imperativo ("add", "fix", "update", no "added", "fixed", "updated")
+5. **Describe QUÉ hace el cambio**, no cómo lo hace
+
+## Estructura del Body (Cuerpo) - Opcional:
+- **Cuándo usar**: Para explicar el "por qué" del cambio
+- **Formato**: Máximo 72 caracteres por línea
+- **Contenido**: 
+  - Motivo del cambio
+  - Comparación con comportamiento anterior
+  - Efectos secundarios o consideraciones
+
+## Estructura del Footer (Pie) - Opcional:
+- **Breaking Changes**: `BREAKING CHANGE: descripción del cambio disruptivo`
+- **Issues**: `Closes #123`, `Fixes #456`, `Refs #789`
+- **Co-authored-by**: Para múltiples autores
+
+## Ejemplos Completos:
+
+### Commit Simple CON ICONO:
+```
+✨ feat(auth): add Google OAuth2 integration
+```
+
+### Commit con Body CON ICONO:
+```
+🐛 fix(customer): resolve customer status update issue
+
+The status validation was incorrectly rejecting valid status 
+transitions. Updated the validation logic to allow all 
+documented status flows.
+
+Fixes #142
+```
+
+### Commit con Breaking Change CON ICONO:
+```
+✨ feat(api): change authentication endpoint structure
+
+BREAKING CHANGE: The /auth/login endpoint now returns tokens 
+in a different format. Update client applications to use the 
+new 'accessToken' and 'refreshToken' fields instead of 'token'.
+```
+
+## Mensajes de Error Comunes y Soluciones:
+
+❌ **Error**: "subject may not be empty"
+✅ **Solución**: Siempre incluye una descripción después del tipo
+
+❌ **Error**: "type may not be empty" 
+✅ **Solución**: Siempre especifica un tipo (feat, fix, etc.)
+
+❌ **Error**: "subject must not be sentence-case"
+✅ **Solución**: Usa minúsculas: `feat: add feature` no `feat: Add feature`
+
+❌ **Error**: "header must not be longer than 100 characters"
+✅ **Solución**: Mantén el header completo bajo 100 caracteres
+
+## Flujo de Trabajo Recomendado:
+
+1. **Antes del commit**: Revisa qué archivos cambiaste
+2. **Identifica el tipo**: ¿Es nueva funcionalidad, fix, refactor, etc.?
+3. **Determina el ámbito**: ¿Qué módulo o área afecta?
+4. **Escribe la descripción**: Breve, imperativo, sin punto final
+5. **Añade body si es necesario**: Para cambios complejos
+6. **Referencia issues**: Si aplica
+
+## Comandos Útiles:
+
+```bash
+# Ver cambios antes del commit
+git diff --staged
+
+# Commit interactivo (si tienes commitizen)
+npx cz
+
+# Validar mensaje de commit
+npx commitlint --edit
+
+# Ver historial de commits formateados
+git log --oneline --decorate
+```
+
+## REGLAS ESPECÍFICAS PARA GENERACIÓN DE COMMITS
+
+### Cuando Generes Commit Messages Automáticamente:
+
+1. **ANALIZA los archivos staged** para determinar el tipo y ámbito correcto
+2. **USA SIEMPRE** el formato Conventional Commits CON ICONOS definido arriba
+3. **INCLUYE SIEMPRE** el icono correspondiente al tipo de commit
+4. **IDENTIFICA el ámbito** basado en los directorios modificados usando el mapeo siguiente
+5. **ESCRIBE la descripción** en imperativo, minúsculas y sin punto final
+6. **NO EXCEDAS 72 caracteres** en el header (incluye icono + tipo + ámbito + descripción)
+7. **INCLUYE body** solo si los cambios requieren explicación del "por qué"
+
+### ⚠️ REGLA CRÍTICA: USO OBLIGATORIO DE ICONOS
+**TODOS los commits DEBEN incluir el icono correspondiente al tipo:**
+- ✨ feat → Para nuevas características
+- 🐛 fix → Para corrección de errores
+- ♻️ refactor → Para refactorización
+- 📝 docs → Para documentación
+- 🎨 style → Para estilos/formato
+- ⚡ perf → Para optimizaciones
+- 🧪 test → Para pruebas
+- 📦 build → Para sistema de build
+- 🚀 ci → Para CI/CD
+- 🔧 chore → Para mantenimiento
+
+### Mapeo Automático de Archivos a Ámbitos:
+
+**Directorio → Ámbito:**
+- `app/modules/auth/` → `auth`
+- `app/modules/customer/` → `customer`
+- `app/modules/location/` → `location`
+- `app/modules/services/` → `services`
+- `app/modules/maintable/` → `maintable`
+- `app/modules/user/` → `user`
+- `app/modules/shifts/` → `shifts`
+- `app/modules/days_off/` → `days_off`
+- `app/modules/user_locations/` → `user_locations`
+- `app/modules/share/` → `share`
+- `config/` → `config`
+- `alembic/` → `database`
+- `app/main.py` → `api`
+- `pyproject.toml` → `build`
+- `package.json` → `build`
+- `commitlint.config.mjs` → `ci`
+- `README.md` → `docs`
+- `.cursorrules` → `chore`
+- `.cursor/` → `chore`
+
+### Lógica para Determinar Tipo de Commit:
+
+- **feat**: Nuevos archivos, nuevas funciones, nuevos endpoints
+- **fix**: Correcciones de bugs, validaciones, errores
+- **refactor**: Cambios de estructura sin nueva funcionalidad
+- **chore**: Archivos de configuración, dependencias, limpieza
+- **docs**: Solo cambios en documentación
+- **test**: Archivos de pruebas
+- **style**: Formateo, espacios, imports sin cambio de lógica
+- **perf**: Optimizaciones de rendimiento
+- **build**: Cambios en dependencias, build tools
+- **ci**: Cambios en CI/CD, workflows
+
+### Formato de Salida Requerido:
+
+```
+<tipo>(<ámbito>): <descripción breve>
+
+[Body opcional si es necesario explicar el por qué]
+```
+
+**Ejemplos correctos basados en tu proyecto:**
+- `feat(maintable): add query handler for criteria filtering`
+- `fix(customer): resolve status validation error`  
+- `refactor(share): simplify data shaper service logic`
+- `chore(build): update Python dependencies`
+- `docs: update API endpoints documentation`
+
+
+

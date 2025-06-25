@@ -14,6 +14,8 @@ from app.modules.location.domain.repositories.location_repository import (
 from app.modules.location.infra.repositories.location_implementation_repository import (
     LocationImplementationRepository,
 )
+from app.modules.maintable.domain.repositories.maintable_repository import MaintableRepository
+from app.modules.maintable.infra.repositories.maintable_implementation_repository import MaintableImplementationRepository
 from app.modules.services.domain.repositories.category_repository import (
     CategoryRepository,
 )
@@ -76,3 +78,7 @@ class AppModule(Module):
     @provider
     def provide_shifts_repository(self) -> ShiftsRepository:
         return ShiftsImplementationRepository()
+    
+    @provider
+    def provide_maintable_repository(self) -> MaintableRepository:
+        return MaintableImplementationRepository()
