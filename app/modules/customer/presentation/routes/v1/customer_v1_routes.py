@@ -35,18 +35,22 @@ from app.modules.customer.application.commands.update_customer.update_customer_c
 # --- Importaciones de Comandos/Consultas de Cliente ---
 # Importaciones para rutas existentes (mantenidas si existen esas rutas)
 
-from app.modules.customer.application.commands.delete_customer.delete_customer_command_handler import DeleteCustomerCommand
-from app.modules.customer.application.queries.get_customers.get_customers_query_handler import GetAllCustomerQuery, GetAllCustomerQueryResponse
-from app.modules.customer.application.commands.create_customer.create_customer_command_handler import CreateCustomerCommand
-from app.modules.customer.application.commands.update_customer.update_customer_command_handler import UpdateCustomerCommand
-
-# ===> IMPORTACIÓN DEL NUEVO COMANDO <===
-from app.modules.customer.application.commands.change_status_customer.change_status_customer_command_handler import ChangeStatusCustomerCommand  # Asegúrate que la ruta es correcta
+from app.modules.customer.application.commands.delete_customer.delete_customer_command_handler import (
+    DeleteCustomerCommand,
+)
+from app.modules.customer.application.queries.get_customers.get_customers_query_handler import (
+    GetAllCustomerQuery,
+    GetAllCustomerQueryResponse,
+)
 
 
 # --- Importaciones Compartidas ---
-from app.modules.customer.application.request.create_customer_request import CreateCustomerRequest
-from app.modules.share.aplication.view_models.paginated_items_view_model import PaginatedItemsViewModel  # Si se usa en GET
+from app.modules.customer.application.request.create_customer_request import (
+    CreateCustomerRequest,
+)
+from app.modules.share.aplication.view_models.paginated_items_view_model import (
+    PaginatedItemsViewModel,
+)  # Si se usa en GET
 
 
 # Modelo Pydantic para el Payload de Actualización (mantenido si existe la ruta de update)
@@ -75,18 +79,14 @@ class CustomerController:
             "/customer",
             # ... (otros parámetros como response_model, status_code, summary, etc.)
             dependencies=[Depends(permission_required(roles=["admin"]))],
-        )(
-            self.create_customer
-        )  # Asegúrate que el método 'create_customer' exista
+        )(self.create_customer)  # Asegúrate que el método 'create_customer' exista
 
         # --- Ruta GET para Obtener Clientes Paginados (Ejemplo existente) ---
         self.router.get(
             "/customer",
             # ... (otros parámetros)
             dependencies=[Depends(permission_required(roles=["admin", "staff"]))],
-        )(
-            self.get_customers
-        )  # Asegúrate que el método 'get_customers' exista
+        )(self.get_customers)  # Asegúrate que el método 'get_customers' exista
 
         # --- RUTA PUT PARA ACTUALIZAR DETALLES (Ejemplo existente) ---
         self.router.put(
@@ -100,11 +100,9 @@ class CustomerController:
         # ===> RUTA PUT PARA CAMBIAR ESTADO DEL CLIENTE <===
         self.router.put(
             "/customer/{customer_id}/status",  # Ruta específica: ID del cliente y '/status'
-
-            response_model=str,               # Se espera un mensaje de texto como respuesta
-            status_code=status.HTTP_200_OK,   # Código de éxito estándar para PUT
+            response_model=str,  # Se espera un mensaje de texto como respuesta
+            status_code=status.HTTP_200_OK,  # Código de éxito estándar para PUT
             summary="Change customer status",  # Resumen breve de la ruta
-
             description="Cambia el estado de un cliente específico entre 'activo' y 'bloqueado'. Requiere rol 'admin'.",
             dependencies=[
                 Depends(permission_required(roles=["admin"]))
@@ -117,21 +115,25 @@ class CustomerController:
         # Se usa PUT para seguir el patrón de 'status', aunque DELETE sería semánticamente más correcto.
         self.router.put(
             "/customer/{customer_id}/delete",  # Ruta específica para la acción de borrado lógico
-            response_model=str,           # Devuelve un mensaje de texto (éxito, no encontrado, etc.)
+            response_model=str,  # Devuelve un mensaje de texto (éxito, no encontrado, etc.)
             status_code=status.HTTP_200_OK,  # Código de éxito para PUT (OK)
             summary="Delete customer",  # Resumen breve de la ruta
             description="Realiza la eliminación lógica de un cliente específico marcándolo como anulado en la base de datos. Requiere rol 'admin'.",
-            dependencies=[Depends(permission_required(roles=["admin"]))]  # Solo administradores pueden anular clientes
-        )(self.delete_customer)  # Asocia la ruta al nuevo método handler 'delete_customer'
+            dependencies=[
+                Depends(permission_required(roles=["admin"]))
+            ],  # Solo administradores pueden anular clientes
+        )(
+            self.delete_customer
+        )  # Asocia la ruta al nuevo método handler 'delete_customer'
 
     async def create_customer(
-            self, 
-            request: CreateCustomerRequest, 
-            current_user: UserAuth = Depends(get_current_user)) -> int:
-
+        self,
+        request: CreateCustomerRequest,
+        current_user: UserAuth = Depends(get_current_user),
+    ) -> int:
         if not current_user.email:
             raise ValueError("User email not found in token")
-        
+
         command = CreateCustomerCommand(  # Ajusta según la definición real
             name_customer=request.name_customer,
             user_create=current_user.email,
@@ -149,9 +151,9 @@ class CustomerController:
     ) -> PaginatedItemsViewModel[GetAllCustomerQueryResponse]:
         # ... (implementación existente)
         # Dummy implementation for completeness if needed:
-        res: PaginatedItemsViewModel[GetAllCustomerQueryResponse] = (
-            await self.mediator.send_async(query_params)
-        )
+        res: PaginatedItemsViewModel[
+            GetAllCustomerQueryResponse
+        ] = await self.mediator.send_async(query_params)
         return res
 
     async def change_customer_details(
@@ -219,8 +221,12 @@ class CustomerController:
     # ===> MÉTODO HANDLER PARA EL BORRADO LÓGICO DEL CLIENTE <===
     async def delete_customer(
         self,
-        customer_id: Annotated[int, Path(ge=1, description="ID del cliente a marcar como anulado")],  # Obtiene el ID del cliente desde el path de la URL
-        current_user: UserAuth = Depends(get_current_user)  # Obtiene la información del usuario autenticado vía DI
+        customer_id: Annotated[
+            int, Path(ge=1, description="ID del cliente a marcar como anulado")
+        ],  # Obtiene el ID del cliente desde el path de la URL
+        current_user: UserAuth = Depends(
+            get_current_user
+        ),  # Obtiene la información del usuario autenticado vía DI
     ) -> str:
         """
         Maneja la petición PUT a /customer/{customer_id}/delete.
@@ -234,14 +240,14 @@ class CustomerController:
             # se lanza un error HTTP 400 indicando que falta información.
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,  # Bad Request
-                detail="Email del usuario modificador no encontrado en el token de autenticación."
+                detail="Email del usuario modificador no encontrado en el token de autenticación.",
             )
 
         # 2. Crear el objeto Comando 'DeleteCustomerCommand'.
         #    Este objeto encapsula los datos necesarios para que el Handler realice la operación.
         command = DeleteCustomerCommand(
-            customer_id=customer_id,          # El ID viene del path de la URL
-            user_modify=current_user.email    # El email del usuario autenticado
+            customer_id=customer_id,  # El ID viene del path de la URL
+            user_modify=current_user.email,  # El email del usuario autenticado
         )
 
         # 3. Enviar el comando al Mediator.

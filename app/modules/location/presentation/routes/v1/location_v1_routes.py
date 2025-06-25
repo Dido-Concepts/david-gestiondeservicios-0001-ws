@@ -1,5 +1,5 @@
 import json
-from typing import Annotated, Any, Dict, Optional
+from typing import Annotated, Optional
 
 from fastapi import (
     APIRouter,
@@ -38,9 +38,7 @@ from app.modules.location.application.queries.get_location_by_id.get_location_by
     GetLocationByIdQuery,
     GetLocationByIdResponse,
 )
-from app.modules.location.application.queries.get_location_refact.get_location_refact_handler import (
-    FindLocationRefactorQuery,
-)
+
 from app.modules.location.domain.entities.location_domain import LocationEntity
 from app.modules.location.application.queries.get_locations.get_locations_handler import (
     FindAllLocationQuery,
@@ -203,17 +201,6 @@ class LocationController:
             },
         )(self.change_schedule_location)
 
-        self.router.get(
-            "/location-refac",
-            dependencies=[Depends(permission_required(roles=["admin"]))],
-            responses={
-                200: {
-                    "description": "Lista paginada de ubicaciones",
-                    "model": PaginatedItemsViewModel[LocationEntity],
-                }
-            },
-        )(self.get_locations_refactor)
-
     async def create_location(
         self,
         name_location: Annotated[str, Form()],
@@ -248,14 +235,6 @@ class LocationController:
     ) -> PaginatedItemsViewModel[FindAllLocationQueryResponse]:
         result: PaginatedItemsViewModel[
             FindAllLocationQueryResponse
-        ] = await self.mediator.send_async(query_params)
-        return result
-
-    async def get_locations_refactor(
-        self, query_params: Annotated[FindLocationRefactorQuery, Query()]
-    ) -> PaginatedItemsViewModel[Dict[str, Any]]:
-        result: PaginatedItemsViewModel[
-            Dict[str, Any]
         ] = await self.mediator.send_async(query_params)
         return result
 

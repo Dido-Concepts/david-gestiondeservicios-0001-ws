@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALDONATE API - Documentación</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .header {
+            margin-bottom: 40px;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #718096;
+            margin-bottom: 30px;
+        }
+
+        .versions {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .version-card {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 200px;
+            max-width: 250px;
+        }
+
+        .version-card:hover {
+            transform: translateY(-5px);
+            border-color: #667eea;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+        }
+
+        .version-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .version-status {
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .version-description {
+            font-size: 0.95rem;
+            color: #4a5568;
+            line-height: 1.5;
+        }
+
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            .title {
+                font-size: 2rem;
+            }
+
+            .versions {
+                flex-direction: column;
+            }
+
+            .version-card {
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">ALDONATE API</h1>
+            <p class="subtitle">Selecciona la versión de la API que deseas explorar</p>
+        </div>
+
+        <div class="versions">
+            <a href="/api/v1/docs" class="version-card">
+                <h2 class="version-title">Versión 1</h2>
+                <div class="version-status">✅ Estable</div>
+                <p class="version-description">
+                    Versión principal con todos los módulos de gestión de servicios
+                </p>
+            </a>
+
+            <a href="/api/v2/docs" class="version-card">
+                <h2 class="version-title">Versión 2</h2>
+                <div class="version-status">🚧 En desarrollo</div>
+                <p class="version-description">
+                    Nuevas funcionalidades y mejoras en desarrollo
+                </p>
+            </a>
+        </div>
+
+        <div class="footer">
+            <p>API de gestión de servicios | Documentación interactiva</p>
+        </div>
+    </div>
+</body>
+
+</html>
