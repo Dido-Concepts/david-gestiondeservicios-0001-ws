@@ -1,7 +1,7 @@
 import json
 from collections import defaultdict
 from datetime import datetime
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from fastapi import HTTPException
 from sqlalchemy import text
@@ -137,10 +137,13 @@ class LocationImplementationRepository(LocationRepository):
         order_by: str,
         sort_by: str,
         query: Optional[str] = None,
+        filters: Optional[Dict[str, Any]] = None,
     ) -> ResponseListRefactor[LocationEntity]:
+        filters_json = json.dumps(filters) if filters else "{}"
+
         stmt = text("""
             SELECT * FROM location_get_locations_refactor(
-                :page_index, :page_size, :order_by, :sort_by, :query
+                :page_index, :page_size, :order_by, :sort_by, :query, CAST(:filters AS JSONB)
             )
         """)
 
@@ -153,6 +156,7 @@ class LocationImplementationRepository(LocationRepository):
                     "order_by": order_by,
                     "sort_by": sort_by,
                     "query": query,
+                    "filters": filters_json,
                 },
             )
 

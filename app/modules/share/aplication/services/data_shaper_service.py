@@ -2,10 +2,7 @@ from typing import Optional, List, Dict, Any, Set
 from dataclasses import is_dataclass, asdict
 
 
-class InvalidFieldsException(Exception):
-    """Excepción personalizada para campos inválidos"""
-
-    pass
+from app.modules.share.domain.exceptions import InvalidFieldsException
 
 
 class DataShaper:

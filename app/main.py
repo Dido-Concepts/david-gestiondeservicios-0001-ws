@@ -19,20 +19,25 @@ from app.modules.days_off.presentation.routes.v1.days_off_v1_routes import (
 from app.modules.location.presentation.routes.v1.location_v1_routes import (
     LocationController,
 )
-from app.modules.maintable.presentation.routes.v1.maintable_v1_routes import MaintableController
+from app.modules.maintable.presentation.routes.v1.maintable_v1_routes import (
+    MaintableController,
+)
 from app.modules.services.presentation.routes.v1.category_v1_routes import (
     CategoryController,
 )
 from app.modules.services.presentation.routes.v1.service_v1_routes import (
     ServiceController,
 )
-from app.modules.share.aplication.services.data_shaper_service import (
+
+from app.modules.share.domain.exceptions import (
     InvalidFieldsException,
+    InvalidFiltersException,
 )
 from app.modules.share.infra.di_config import AppModule
 from app.modules.share.infra.exception_handlers import (
     generic_exception_handler,
     invalid_fields_exception_handler,
+    invalid_filters_exception_handler,
     runtime_error_handler,
     value_error_handler,
 )
@@ -56,6 +61,9 @@ def create_app(mediator: Optional[Mediator] = None) -> FastAPI:
     )
     app.add_exception_handler(ValueError, value_error_handler)
     app.add_exception_handler(RuntimeError, runtime_error_handler)
+    app.add_exception_handler(
+        InvalidFiltersException, invalid_filters_exception_handler
+    )
     app.add_exception_handler(InvalidFieldsException, invalid_fields_exception_handler)
     app.add_exception_handler(Exception, generic_exception_handler)
 
@@ -94,7 +102,9 @@ def create_app(mediator: Optional[Mediator] = None) -> FastAPI:
     )
     app.include_router(days_off_controller.router, prefix=prefix_v1, tags=["Days-Off"])
     app.include_router(shifts_controller.router, prefix=prefix_v1, tags=["Shifts"])
-    app.include_router(maintable_controller.router, prefix=prefix_v1, tags=["Maintable"])
+    app.include_router(
+        maintable_controller.router, prefix=prefix_v1, tags=["Maintable"]
+    )
 
     return app
 
