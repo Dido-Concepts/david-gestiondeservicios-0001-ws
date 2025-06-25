@@ -10,6 +10,7 @@ from sqlalchemy.exc import DBAPIError
 from app.constants import uow_var
 from app.modules.location.domain.entities.location_domain import (
     DayOfWeek,
+    LocationEntity,
     LocationInfoResponse,
     LocationResponse,
     ScheduleRangeDomain,
@@ -19,14 +20,16 @@ from app.modules.location.domain.entities.location_domain import (
 from app.modules.location.domain.repositories.location_repository import (
     LocationRepository,
 )
-from app.modules.share.domain.file.file_domain import FileResponse
-from app.modules.share.domain.repositories.repository_types import ResponseList
+from app.modules.share.domain.file.file_domain import FileEntity, FileResponse
+from app.modules.share.domain.repositories.repository_types import (
+    ResponseList,
+    ResponseListRefactor,
+)
 from app.modules.share.infra.persistence.unit_of_work import UnitOfWork
 from app.modules.share.utils.handle_dbapi_error import handle_error
 
 
 class LocationImplementationRepository(LocationRepository):
-
     @property
     def _uow(self) -> UnitOfWork:
         try:
@@ -47,7 +50,6 @@ class LocationImplementationRepository(LocationRepository):
         user_create: str,
         location_review: Optional[str] = None,
     ) -> int:
-
         day_ranges = defaultdict(list)
         for s in schedule:
             day_name = s.day.value
@@ -66,7 +68,6 @@ class LocationImplementationRepository(LocationRepository):
         )
 
         try:
-
             result = await self._uow.session.execute(
                 stmt,
                 {
@@ -93,7 +94,6 @@ class LocationImplementationRepository(LocationRepository):
     async def find_locations(
         self, page_index: int, page_size: int
     ) -> ResponseList[LocationResponse]:
-
         stmt = text("SELECT get_sedes(:page_index, :page_size)")
 
         result = await self._uow.session.execute(
@@ -130,8 +130,91 @@ class LocationImplementationRepository(LocationRepository):
         )
         return response
 
-    async def find_location_by_id(self, location_id: int) -> LocationInfoResponse:
+    async def find_location_refactor(
+        self,
+        page_index: int,
+        page_size: int,
+        order_by: str,
+        sort_by: str,
+        query: Optional[str] = None,
+    ) -> ResponseListRefactor[LocationEntity]:
+        stmt = text("""
+            SELECT * FROM location_get_locations_refactor(
+                :page_index, :page_size, :order_by, :sort_by, :query
+            )
+        """)
 
+        try:
+            result = await self._uow.session.execute(
+                stmt,
+                {
+                    "page_index": page_index,
+                    "page_size": page_size,
+                    "order_by": order_by,
+                    "sort_by": sort_by,
+                    "query": query,
+                },
+            )
+
+            row = result.fetchone()
+            if not row:
+                return ResponseListRefactor(data=[], total_items=0)
+
+            data_json = row.data  # JSON array de las sedes
+            total_items = row.total_items
+
+            # Convertir el JSON a lista de LocationEntity
+            locations_list: list[LocationEntity] = []
+
+            if data_json:  # Si hay datos
+                for item in data_json:
+                    # Crear FileEntity - siempre debe existir según el dominio
+                    if not item.get("file"):
+                        continue  # Saltar esta ubicación si no tiene archivo
+
+                    file_data = item["file"]
+                    file_entity = FileEntity(
+                        id=file_data["id"],
+                        url=file_data["url"],
+                        filename=file_data["filename"],
+                        content_type=file_data["content_type"],
+                        size=file_data["size"],
+                        insert_date=datetime.fromisoformat(file_data["insert_date"])
+                        if file_data["insert_date"]
+                        else datetime.now(),
+                        update_date=datetime.fromisoformat(file_data["update_date"])
+                        if file_data.get("update_date")
+                        else None,
+                    )
+
+                    # Crear LocationEntity
+                    location = LocationEntity(
+                        id=item["id"],
+                        nombre_sede=item["nombre_sede"],
+                        telefono_sede=item.get("telefono_sede"),
+                        direccion_sede=item.get("direccion_sede"),
+                        insert_date=datetime.fromisoformat(item["insert_date"])
+                        if item["insert_date"]
+                        else datetime.now(),
+                        update_date=datetime.fromisoformat(item["update_date"])
+                        if item.get("update_date")
+                        else None,
+                        user_create=item["user_create"],
+                        user_modify=item.get("user_modify"),
+                        review_location=item["review_location"],
+                        status=item["status"],
+                        file=file_entity,
+                    )
+
+                    locations_list.append(location)
+
+            return ResponseListRefactor(data=locations_list, total_items=total_items)
+
+        except DBAPIError as e:
+            handle_error(e)
+            raise RuntimeError("Este punto nunca se alcanza")
+
+    async def find_location_by_id(self, location_id: int) -> LocationInfoResponse:
         stmt = text("SELECT get_sede_info(:location_id)")
 
         result = await self._uow.session.execute(
@@ -179,7 +262,6 @@ class LocationImplementationRepository(LocationRepository):
         return response
 
     async def change_status_location(self, location_id: int, user_update: str) -> str:
-
         stmt = text("SELECT change_status_location(:location_id, :user_update)")
 
         try:
@@ -217,7 +299,6 @@ class LocationImplementationRepository(LocationRepository):
         new_file_content_type: Optional[str] = None,
         new_file_size: Optional[int] = None,
     ) -> str:
-
         stmt = text(
             """
             SELECT update_sede_details(
@@ -304,7 +385,6 @@ class LocationImplementationRepository(LocationRepository):
             raise RuntimeError("Este punto nunca se alcanza")
 
     async def get_all_location_catalog(self) -> list[SedeDomain]:
-
         stmt = text(
             """
             SELECT * FROM location_sp_get_all_sedes_ordered();
@@ -317,7 +397,6 @@ class LocationImplementationRepository(LocationRepository):
             sedes_list: list[SedeDomain] = []
 
             for record in records:
-
                 sede = SedeDomain(
                     id=record.id,
                     nombre_sede=record.nombre_sede,
