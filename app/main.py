@@ -19,6 +19,7 @@ from app.modules.days_off.presentation.routes.v1.days_off_v1_routes import (
 from app.modules.location.presentation.routes.v1.location_v1_routes import (
     LocationController,
 )
+from app.modules.maintable.presentation.routes.v1.maintable_v1_routes import MaintableController
 from app.modules.services.presentation.routes.v1.category_v1_routes import (
     CategoryController,
 )
@@ -79,6 +80,7 @@ def create_app(mediator: Optional[Mediator] = None) -> FastAPI:
     user_location_controller = UserLocationsController(mediator)
     days_off_controller = DaysOffController(mediator)
     shifts_controller = ShiftsController(mediator)
+    maintable_controller = MaintableController(mediator)
 
     app.include_router(user_controller.router, prefix=prefix_v1, tags=["User"])
     app.include_router(role_controller.router, prefix=prefix_v1, tags=["Role"])
@@ -92,6 +94,7 @@ def create_app(mediator: Optional[Mediator] = None) -> FastAPI:
     )
     app.include_router(days_off_controller.router, prefix=prefix_v1, tags=["Days-Off"])
     app.include_router(shifts_controller.router, prefix=prefix_v1, tags=["Shifts"])
+    app.include_router(maintable_controller.router, prefix=prefix_v1, tags=["Maintable"])
 
     return app
 

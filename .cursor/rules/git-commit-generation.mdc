@@ -1,0 +1,140 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: "Generación automática de commits siguiendo Conventional Commits para este proyecto específico"
+rule_type: "Agent Requested"
+---
+
+# Generación Automática de Commit Messages
+
+Esta regla se aplica cuando necesites generar mensajes de commit automáticamente para este proyecto.
+
+## INSTRUCCIONES OBLIGATORIAS PARA COMMITS
+
+### 1. Análisis Previo Requerido
+ANTES de generar el commit message, DEBES:
+- Ejecutar `git diff --staged` para analizar cambios
+- Identificar archivos modificados y su ubicación
+- Determinar el impacto y naturaleza de los cambios
+
+### 2. Mapeo de Directorios a Ámbitos (OBLIGATORIO)
+```
+app/modules/auth/ → auth
+app/modules/customer/ → customer
+app/modules/location/ → location
+app/modules/services/ → services
+app/modules/maintable/ → maintable
+app/modules/user/ → user
+app/modules/shifts/ → shifts
+app/modules/days_off/ → days_off
+app/modules/user_locations/ → user_locations
+app/modules/share/ → share
+config/ → config
+alembic/ → database
+app/main.py → api
+pyproject.toml → build
+package.json → build
+commitlint.config.mjs → ci
+README.md → docs
+.cursorrules → chore
+.cursor/ → chore
+```
+
+### 3. Lógica de Determinación de Tipo CON ICONOS OBLIGATORIOS
+- **✨ feat**: Nuevos archivos, funciones, endpoints, features
+- **🐛 fix**: Corrección de bugs, validaciones, errores
+- **♻️ refactor**: Cambios de estructura sin nueva funcionalidad  
+- **🔧 chore**: Configuración, dependencias, archivos de setup
+- **📝 docs**: Solo documentación (README, comentarios)
+- **🧪 test**: Archivos y funciones de pruebas
+- **🎨 style**: Formateo, linting, imports sin cambio lógico
+- **⚡ perf**: Optimizaciones de rendimiento
+- **📦 build**: Dependencies, build tools, package managers
+- **🚀 ci**: CI/CD, workflows, automatización
+
+### 4. Formato de Salida OBLIGATORIO (Compatible con Commitlint)
+```
+<tipo>(<ámbito>): <descripción>
+
+[Body opcional solo si es necesario]
+```
+
+**NOTA IMPORTANTE:** Los iconos se configuran en commitlint.config.mjs, NO en el mensaje del commit.
+El mensaje debe seguir el formato estándar de Conventional Commits.
+
+### 5. Reglas de Formato ESTRICTAS
+- ✅ Descripción en minúsculas: `add new feature`
+- ❌ NO capitalizar: `Add new feature`
+- ✅ Verbo imperativo: `add`, `fix`, `update`
+- ❌ NO pasado: `added`, `fixed`, `updated`
+- ✅ Máximo 72 caracteres en header
+- ✅ Sin punto final en descripción
+- ✅ Body solo si se necesita explicar el "por qué"
+- ✅ **CRITICAL**: Cada línea del body máximo 100 caracteres
+- ✅ Usar saltos de línea para mantener límite de caracteres
+
+### 6. Ejemplos para Este Proyecto (Compatible con Commitlint)
+**Correcto:**
+- `feat(maintable): add criteria query handler`
+- `fix(customer): resolve status validation error`
+- `refactor(share): simplify data shaper logic`
+- `chore(cursor): migrate rules to new format`
+
+**Incorrecto:**
+- `✨ feat(maintable): add criteria query handler` (icono rompe commitlint)
+- `Feat(maintable): Add criteria query handler` (mayúsculas)
+- `feat: added new functionality` (pasado, sin ámbito específico)
+- `fix(customer): resolve status validation error.` (punto final)
+
+### 7. Proceso de Generación
+1. Analizar archivos staged
+2. Identificar ámbito usando mapeo
+3. Determinar tipo basado en naturaleza del cambio
+4. Escribir descripción clara en imperativo
+5. Verificar límite de caracteres
+6. Añadir body solo si es complejo
+
+### 8. Manejo de Líneas Largas en Body
+Cuando el body exceda 100 caracteres por línea:
+- Dividir en múltiples líneas
+- Usar guiones para listas
+- Mantener contexto y legibilidad
+- Ejemplo correcto:
+```
+refactor(maintable): consolidar funcionalidad de categorías y servicios
+
+Refactorización mayor del módulo maintable para unificar el manejo de 
+categorías y servicios bajo una arquitectura más genérica y mantenible.
+
+Cambios principales:
+- Eliminadas clases específicas de Category y Service por implementación genérica
+- Consolidados repositorios específicos en maintable_repository genérico
+- Unificadas rutas de categorías y servicios en maintable_v1_routes
+```
+
+### 9. Mensaje Final (Solo el mensaje, SIN comando)
+Proporciona SOLO el mensaje de commit:
+```
+tipo(ámbito): descripción
+```
+
+O con body si es necesario:
+```
+tipo(ámbito): descripción
+
+Explicación del por qué (máximo 100 caracteres por línea)
+
+Closes #123
+```
+
+**Ejemplos de mensajes:**
+```
+feat(maintable): add criteria query handler
+fix(customer): resolve validation error
+refactor(share): simplify data mapper
+```
+
+
