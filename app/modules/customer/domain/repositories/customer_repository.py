@@ -1,11 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Dict, Any
 from datetime import date
 
 # Importaciones específicas del módulo (si CustomerResponse se usa aquí o en implementaciones)
 from app.modules.customer.domain.entities.customer_domain import CustomerEntity
+
 # Importación de tipo compartido (si ResponseList se usa aquí o en implementaciones)
-from app.modules.share.domain.repositories.repository_types import ResponseList
+from app.modules.share.domain.repositories.repository_types import (
+    ResponseList,
+    ResponseListRefactor,
+)
 
 
 class CustomerRepository(ABC):
@@ -23,7 +27,7 @@ class CustomerRepository(ABC):
         email_customer: Optional[str],
         phone_customer: Optional[str],
         birthdate_customer: Optional[date],
-        status_customer: Optional[str] = 'active'
+        status_customer: Optional[str] = "active",
     ) -> int:
         """
         Método abstracto para crear un nuevo registro de cliente.
@@ -43,14 +47,41 @@ class CustomerRepository(ABC):
         pass  # La implementación real estará en la subclase concreta
 
     @abstractmethod
+    async def find_customer_refactor(
+        self,
+        page_index: int,
+        page_size: int,
+        order_by: str,
+        sort_by: str,
+        query: Optional[str] = None,
+        filters: Optional[Dict[str, Any]] = None,
+    ) -> ResponseListRefactor[CustomerEntity]:
+        """
+        Método abstracto para buscar clientes con paginación refactorizada.
+        Similar a find_customers pero usando ResponseListRefactor y con más opciones de filtrado.
+
+        Args:
+            page_index: Índice de la página.
+            page_size: Tamaño de la página.
+            order_by: Campo por el cual ordenar.
+            sort_by: Dirección del ordenamiento ('ASC' o 'DESC').
+            query: Término de búsqueda opcional para filtrar por name_customer.
+            filters: Diccionario opcional con filtros aplicables (ej: {"status_customer": "active"}).
+
+        Returns:
+            ResponseListRefactor[CustomerEntity]: Lista paginada de clientes.
+        """
+        pass
+
+    @abstractmethod
     async def update_details_customer(
         self,
-        customer_id: int,          # ID del cliente a actualizar
-        name_customer: str,        # Nuevo nombre para el cliente
-        email_customer: str,       # Nuevo email para el cliente
-        phone_customer: str,       # Nuevo teléfono para el cliente
+        customer_id: int,  # ID del cliente a actualizar
+        name_customer: str,  # Nuevo nombre para el cliente
+        email_customer: str,  # Nuevo email para el cliente
+        phone_customer: str,  # Nuevo teléfono para el cliente
         birthdate_customer: date,  # Nueva fecha de nacimiento para el cliente
-        user_modify: str           # Usuario que realiza la modificación
+        user_modify: str,  # Usuario que realiza la modificación
     ) -> str:
         """
         Método abstracto para actualizar los detalles específicos de un cliente existente.
@@ -114,4 +145,6 @@ class CustomerRepository(ABC):
                  (ej: "Cliente con ID: X marcado como anulado correctamente.").
         """
         pass  # Indica que la implementación real debe ser proporcionada por una subclase.
+
+
 #

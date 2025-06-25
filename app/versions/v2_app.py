@@ -9,6 +9,9 @@ from app.modules.test.presentation.routes.v2.test_v2_routes import TestControlle
 from app.modules.location.presentation.routes.v2.location_v2_routes import (
     LocationV2Controller,
 )
+from app.modules.customer.presentation.routes.v2.customer_v2_routes import (
+    CustomerV2Controller,
+)
 
 
 def create_v2_app(mediator: Optional[Mediator] = None) -> FastAPI:
@@ -33,9 +36,11 @@ def create_v2_app(mediator: Optional[Mediator] = None) -> FastAPI:
     # Inicializar controllers de v2
     test_controller = TestController(mediator)
     location_controller = LocationV2Controller(mediator)
+    customer_controller = CustomerV2Controller(mediator)
 
     # Incluir rutas sin prefijo adicional ya que están montadas en /api/v2
     app.include_router(test_controller.router, tags=["Test"])
     app.include_router(location_controller.router, tags=["Location"])
+    app.include_router(customer_controller.router, tags=["Customer"])
 
     return app

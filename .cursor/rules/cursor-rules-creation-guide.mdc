@@ -1,0 +1,482 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Cursor Rules Creation Guide - Guía de Creación de Reglas Cursor
+
+## 📋 Formato Moderno .mdc (2025)
+
+Los cursor rules modernos utilizan el formato **MDC** (Markdown Configuration) que combina:
+- **YAML frontmatter** para metadatos
+- **Contenido Markdown** para la documentación
+
+### 🏗️ Estructura Básica
+
+```markdown
+---
+description: Descripción clara y concisa de la regla en una línea
+globs: ["pattern1/**/*.ext", "pattern2/**/*.ext"]  # Array de patrones de archivos
+alwaysApply: false  # true | false
+---
+
+# Título de la Regla
+
+Contenido en markdown explicando la regla...
+```
+
+## 🎯 Tipos de Cursor Rules (4 Tipos Principales)
+
+### 1. **Always Rules** (Siempre Aplicadas)
+```yaml
+---
+description: Regla que siempre se aplica en todo el proyecto
+globs: ["**/*"]  # Patrón amplio ya que siempre se aplica
+alwaysApply: true
+---
+```
+- **Cuándo usar**: Estándares globales, convenciones de código, reglas fundamentales
+- **Ventaja**: Siempre en contexto
+- **Desventaja**: Puede sobrecargar el contexto
+
+### 2. **Auto Attached Rules** (Auto-adjuntadas por Patrón)
+```yaml
+---
+description: Regla específica para archivos TypeScript React
+globs: ["**/*.tsx", "**/*.ts"]
+alwaysApply: false
+---
+```
+- **Cuándo usar**: Reglas específicas para tipos de archivos o directorios
+- **Ventaja**: Solo se activa cuando es relevante
+- **Comportamiento**: Se incluye automáticamente cuando trabajas con archivos que coinciden con los globs
+
+### 3. **Agent Requested Rules** (Solicitadas por IA)
+```yaml
+---
+description: Reglas para optimización de performance en React
+globs: []  # Vacío porque el agente decide cuándo usarla
+alwaysApply: false
+---
+```
+- **Cuándo usar**: Reglas especializadas que el AI puede elegir según contexto
+- **Ventaja**: El AI decide dinámicamente si es relevante
+- **Comportamiento**: La IA lee la description y decide si incluir la regla
+
+### 4. **Manual Rules** (Solo Manuales)
+```yaml
+---
+description: ""  # Vacío para reglas manuales
+globs: []        # Vacío para reglas manuales  
+alwaysApply: false
+---
+```
+- **Cuándo usar**: Templates, macros, reglas muy específicas
+- **Activación**: Solo con `@nombre-regla` en el chat
+- **Ventaja**: Control total sobre cuándo se usa
+
+## 📁 Ubicación y Organización
+
+### Estructura de Directorios
+```
+.cursor/
+├── rules/
+│   ├── core/                    # Reglas fundamentales
+│   │   ├── 001-project-standards.mdc
+│   │   └── 002-code-style.mdc
+│   ├── language/                # Reglas por lenguaje
+│   │   ├── typescript.mdc
+│   │   ├── python.mdc
+│   │   └── sql.mdc
+│   ├── framework/               # Reglas por framework
+│   │   ├── fastapi.mdc
+│   │   ├── react.mdc
+│   │   └── postgresql.mdc
+│   └── patterns/                # Patrones específicos
+│       ├── api-endpoints.mdc
+│       └── database-queries.mdc
+```
+
+### Convenciones de Nombres
+- **Prefijo numérico**: `001-`, `002-` para orden de precedencia
+- **Categorías**: `core-`, `lang-`, `fw-`, `pattern-`
+- **Descriptivo**: `api-get-endpoints-pattern.mdc`
+- **Sin espacios**: Usar guiones `-` en lugar de espacios
+
+## 🎨 Mejores Prácticas
+
+### ✅ **Estructura del Contenido**
+
+```markdown
+# Título Claro y Específico
+
+## Descripción General
+Párrafo explicando el propósito de la regla.
+
+## 🎯 Cuándo Aplicar
+- Escenario 1
+- Escenario 2
+- Escenario 3
+
+## 📋 Reglas Específicas
+1. **Regla 1**: Descripción clara y accionable
+2. **Regla 2**: Con ejemplos concretos
+3. **Regla 3**: Medible y verificable
+
+## ✅ Ejemplos Correctos
+```javascript
+// Ejemplo de código correcto
+function ejemplo() {
+    return "correcto";
+}
+```
+
+## ❌ Ejemplos Incorrectos
+```javascript
+// Ejemplo de lo que NO hacer
+function mal_ejemplo() {
+    return "incorrecto"
+}
+```
+
+## 🔧 Implementación
+Pasos específicos para implementar la regla.
+
+## 🎯 Checklist de Validación
+- [ ] Criterio 1 cumplido
+- [ ] Criterio 2 cumplido
+- [ ] Criterio 3 cumplido
+```
+
+### ✅ **Globs Patterns Efectivos**
+
+```yaml
+# Específicos por extensión
+globs: ["**/*.py", "**/*.pyi"]
+
+# Por directorio
+globs: ["app/modules/**/routes/**/*.py"]
+
+# Múltiples patrones
+globs: [
+  "**/*.ts", 
+  "**/*.tsx", 
+  "**/*.js", 
+  "**/*.jsx"
+]
+
+# Exclusiones (no soportado directamente, usar description)
+# Para excluir, mencionarlo en la description
+```
+
+### ✅ **Descriptions Efectivas**
+
+```yaml
+# ✅ Buenas descriptions
+description: "Estándares de código Python usando Black formatter y type hints"
+description: "Patrón para endpoints FastAPI con paginación y filtros dinámicos"
+description: "Reglas de React Hooks y mejores prácticas de componentes funcionales"
+
+# ❌ Malas descriptions  
+description: "Reglas generales"
+description: "Código Python"
+description: "React"
+```
+
+## 🚀 Templates por Tipo de Regla
+
+### Template 1: Always Rule (Estándares Globales)
+```markdown
+---
+description: Estándares globales de código y arquitectura del proyecto
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Estándares Globales del Proyecto
+
+## 🎯 Principios Fundamentales
+- Principio 1
+- Principio 2
+
+## 📋 Convenciones Obligatorias
+1. **Naming**: Convenciones de nombres
+2. **Structure**: Estructura de archivos
+3. **Comments**: Documentación
+
+## 🚫 Prohibiciones Estrictas
+- No hacer X
+- Evitar Y
+- Nunca Z
+```
+
+### Template 2: Auto Attached Rule (Por Tipo de Archivo)
+```markdown
+---
+description: Reglas específicas para archivos [TIPO] en [CONTEXTO]
+globs: ["**/*.[EXT]", "**/[DIR]/**/*.[EXT]"]
+alwaysApply: false
+---
+
+# Reglas para [TIPO DE ARCHIVO]
+
+## 🎯 Aplicabilidad
+Esta regla se aplica automáticamente a:
+- Archivos [tipo]
+- En directorio [contexto]
+
+## 📋 Estándares Específicos
+1. **Estructura**: Cómo organizar el archivo
+2. **Imports**: Orden y organización de imports
+3. **Exports**: Qué y cómo exportar
+
+## ✅ Ejemplo Correcto
+```[language]
+// Código ejemplo siguiendo las reglas
+```
+
+## ❌ Ejemplo Incorrecto
+```[language]
+// Código ejemplo violando las reglas
+```
+```
+
+### Template 3: Agent Requested Rule (Especializada)
+```markdown
+---
+description: Reglas especializadas para [CASO_USO_ESPECÍFICO] que el agente puede solicitar según contexto
+globs: []
+alwaysApply: false
+---
+
+# [NOMBRE DE LA REGLA ESPECIALIZADA]
+
+## 🎯 Cuándo el Agente Debe Solicitar Esta Regla
+- Cuando detecte [patrón 1]
+- Si el usuario menciona [concepto 2]
+- En contexto de [situación 3]
+
+## 📋 Reglas Especializadas
+Reglas muy específicas para casos particulares...
+
+## 🔧 Implementación Detallada
+Pasos específicos con ejemplos de código...
+```
+
+### Template 4: Manual Rule (Template/Macro)
+```markdown
+---
+description: ""
+globs: []
+alwaysApply: false
+---
+
+# [NOMBRE DEL TEMPLATE]
+
+## 🎯 Uso
+Esta regla se invoca manualmente con `@nombre-regla` para:
+- Generar [tipo de código]
+- Crear [tipo de estructura]
+- Aplicar [patrón específico]
+
+## 📋 Template/Macro Content
+Contenido completo del template o macro...
+
+## 🔧 Parámetros Personalizables
+- {placeholder1}: Descripción
+- {placeholder2}: Descripción
+```
+
+## ⚡ Ejemplos Reales de Cursor Rules
+
+### Ejemplo 1: Always Rule para Estándares Python
+```markdown
+---
+description: Estándares de código Python con Black, type hints, y convenciones de naming
+globs: ["**/*.py"]
+alwaysApply: true
+---
+
+# Python Code Standards
+
+## 🎯 Formatting
+- Usar **Black** formatter (línea 88 caracteres)
+- Imports organizados con **isort**
+- **Type hints** obligatorios en funciones públicas
+
+## 📋 Naming Conventions
+- Variables: `snake_case`
+- Funciones: `snake_case`
+- Clases: `PascalCase`
+- Constantes: `UPPER_SNAKE_CASE`
+
+## ✅ Ejemplo Correcto
+```python
+from typing import Optional
+
+def calculate_total_price(items: list[dict], discount: Optional[float] = None) -> float:
+    """Calculate total price with optional discount."""
+    total = sum(item["price"] for item in items)
+    return total * (1 - discount) if discount else total
+```
+```
+
+### Ejemplo 2: Auto Attached para FastAPI
+```markdown
+---
+description: Patrones y mejores prácticas para endpoints FastAPI con validación, paginación y documentación
+globs: ["**/routes/**/*.py", "**/presentation/**/*.py"]
+alwaysApply: false
+---
+
+# FastAPI Endpoints Best Practices
+
+## 🎯 Estructura de Controladores
+```python
+from typing import Annotated
+from fastapi import APIRouter, Depends, Query
+from mediatr import Mediator
+
+class EntityV2Controller:
+    def __init__(self, mediator: Mediator):
+        self.mediator = mediator
+        self.router = APIRouter()
+        self._add_routes()
+
+    def _add_routes(self) -> None:
+        self.router.get("/entity")(self.get_entities)
+
+    async def get_entities(
+        self, query_params: Annotated[QueryModel, Query()]
+    ) -> ResponseModel:
+        return await self.mediator.send_async(query_params)
+```
+
+## 📋 Query Parameters Estándar
+- `page_index: int = Query(ge=1)`
+- `page_size: int = Query(ge=1, le=100)`
+- `order_by: Literal[...]`
+- `sort_by: Literal["ASC", "DESC"]`
+```
+
+## 🔧 Comandos de Gestión de Rules
+
+### Crear Nueva Regla
+```bash
+# Desde Cursor
+Cmd/Ctrl + Shift + P -> "New Cursor Rule"
+```
+
+### Verificar Reglas Activas
+```bash
+# En Cursor Settings > Rules
+# Ver todas las reglas del proyecto y su estado
+```
+
+### Referenciar Regla Manualmente
+```markdown
+En chat: @nombre-regla
+```
+
+## 🎯 Checklist para Nuevas Cursor Rules
+
+### ✅ Antes de Crear
+- [ ] ¿La regla es específica y accionable?
+- [ ] ¿El scope está bien definido con globs?
+- [ ] ¿El tipo de regla (Always/Auto/Agent/Manual) es correcto?
+- [ ] ¿La description es clara y específica?
+
+### ✅ Contenido de la Regla  
+- [ ] Título claro y descriptivo
+- [ ] Sección "Cuándo aplicar" bien definida
+- [ ] Reglas específicas, no vagas
+- [ ] Ejemplos de código correcto e incorrecto
+- [ ] Checklist de validación
+- [ ] Implementación paso a paso si es compleja
+
+### ✅ Después de Crear
+- [ ] Testear que se active correctamente
+- [ ] Verificar que el AI la interpreta bien
+- [ ] Documentar en el README del proyecto si es relevante
+- [ ] Revisar si hay conflictos con otras reglas
+
+## 🚫 Errores Comunes a Evitar
+
+### ❌ **Reglas Demasiado Vagas**
+```yaml
+# MAL
+description: "Reglas generales de código"
+
+# BIEN  
+description: "Estándares TypeScript con interfaces explícitas y error handling"
+```
+
+### ❌ **Globs Incorrectos**
+```yaml
+# MAL
+globs: "*.py"  # String en lugar de array
+
+# BIEN
+globs: ["**/*.py"]  # Array con patrón correcto
+```
+
+### ❌ **AlwaysApply Mal Usado**
+```yaml
+# MAL - Regla muy específica como Always
+description: "Reglas específicas de React Hooks"
+alwaysApply: true
+
+# BIEN - Como Auto Attached
+description: "Reglas específicas de React Hooks"
+globs: ["**/*.tsx", "**/*.jsx"]
+alwaysApply: false
+```
+
+### ❌ **Contenido No Accionable**
+```markdown
+# MAL
+## Reglas
+- Escribe buen código
+- Sé consistente
+
+# BIEN  
+## Reglas
+- Funciones máximo 30 líneas
+- Usar TypeScript strict mode
+- Nombrar variables en camelCase
+```
+
+## 💡 Tips Avanzados
+
+### 🎯 **Precedencia de Reglas**
+- Usar prefijos numéricos: `001-`, `002-` para orden
+- Rules con números más altos tienen precedencia
+- Always rules siempre se incluyen primero
+
+### 🎯 **Organización por Equipo**
+```
+.cursor/rules/
+├── core/           # Estándares del equipo (Always)
+├── frontend/       # Reglas React/Vue (Auto Attached)  
+├── backend/        # Reglas FastAPI/Django (Auto Attached)
+├── database/       # Reglas SQL/PostgreSQL (Auto Attached)
+└── templates/      # Macros y templates (Manual)
+```
+
+### 🎯 **Testing de Rules**
+- Crear archivos de prueba que coincidan con los globs
+- Verificar en Cursor Settings > Rules que aparecen
+- Testear con prompts específicos
+- Usar diferentes tipos de archivos para validar
+
+## 🎉 Resultado Esperado
+
+Con estas guidelines, los cursor rules serán:
+- ✅ **Consistentes** en estructura y formato
+- ✅ **Específicos** y accionables  
+- ✅ **Bien organizados** por tipo y propósito
+- ✅ **Efectivos** para el AI y el equipo
+- ✅ **Mantenibles** y escalables
+
+¡Ahora tienes todo el contexto para crear cursor rules profesionales y efectivos! 🚀
+

@@ -149,8 +149,10 @@ class CustomerController:
     async def get_customers(
         self, query_params: Annotated[GetAllCustomerQuery, Depends()]
     ) -> PaginatedItemsViewModel[GetAllCustomerQueryResponse]:
-        # ... (implementación existente)
-        # Dummy implementation for completeness if needed:
+        """
+        Versión 1 del endpoint para obtener clientes.
+        Para la nueva versión refactorizada usar /api/v2/customer
+        """
         res: PaginatedItemsViewModel[
             GetAllCustomerQueryResponse
         ] = await self.mediator.send_async(query_params)
