@@ -5,9 +5,9 @@ from fastapi import Query
 from pydantic import BaseModel, Field
 
 from app.constants import injector_var
-from app.modules.location.domain.entities.location_domain import LocationEntity
-from app.modules.location.domain.repositories.location_repository import (
-    LocationRepository,
+from app.modules.services.domain.entities.service_domain import ServiceEntity2
+from app.modules.services.domain.repositories.service_repository import (
+    ServiceRepository,
 )
 
 from app.modules.share.aplication.services.data_shaper_service import DataShaper
@@ -21,7 +21,7 @@ from app.modules.share.aplication.view_models.paginated_items_view_model import 
 from app.modules.share.domain.handler.request_handler import IRequestHandler
 
 
-class FindLocationRefactorQuery(BaseModel):
+class BaseFindServicesByLocationV2Query(BaseModel):
     page_index: int = Query(
         ge=1, description="Número de página (mínimo 1, requerido)", example=1
     )
@@ -29,68 +29,76 @@ class FindLocationRefactorQuery(BaseModel):
         ge=1, le=100, description="Tamaño de página (1-100, requerido)", example=10
     )
     order_by: Literal[
-        "id",
-        "nombre_sede",
-        "telefono_sede",
-        "direccion_sede",
+        "service_id",
+        "service_name",
+        "category_name",
+        "price",
+        "duration_minutes",
         "insert_date",
         "update_date",
-        "status",
-    ] = Query(default="id", description="Campo por el cual ordenar")
+    ] = Query(default="service_name", description="Campo por el cual ordenar")
     sort_by: Literal["ASC", "DESC"] = Query(
         default="ASC", description="Dirección del ordenamiento"
     )
     query: Optional[str] = Query(
-        default=None, description="Texto para buscar en nombre_sede"
+        default=None, description="Texto para buscar en service_name o category_name"
     )
 
     fields: Optional[str] = Query(
         default=None,
-        description="Campos a incluir separados por comas (ej: 'id,nombre_sede,telefono_sede')",
+        description="Campos a incluir separados por comas (ej: 'service_id,service_name,price')",
     )
 
     filters: Optional[str] = Query(
         default=None,
-        description='Filtros en formato JSON: {"status": true, "user_create": "usuario@email.com"}',
-        example='{"status": true}',
+        description='Filtros en formato JSON: {"category_id": 1}',
+        example='{"category_id": 1}',
     )
 
 
-class LocationFiltersModel(BaseModel):
-    """Filtros específicos permitidos para locations"""
+class ServiceFiltersModel(BaseModel):
+    """Filtros específicos permitidos para servicios"""
 
-    status: Optional[bool] = Field(
-        default=None, description="Filtrar por estado activo/inactivo"
-    )
-    user_create: Optional[str] = Field(
-        default=None, description="Filtrar por usuario creador"
+    category_id: Optional[int] = Field(
+        default=None, description="Filtrar por ID de categoría", ge=1
     )
 
     class Config:
         extra = "forbid"
 
 
+class FindServicesByLocationV2Query(BaseFindServicesByLocationV2Query):
+    """
+    Modelo completo incluyendo table_name para el handler.
+    """
+
+    location_id: int = 0
+
+
 @Mediator.handler
-class FindAllLocationQueryHandler(
-    IRequestHandler[FindLocationRefactorQuery, PaginatedItemsViewModel[Dict[str, Any]]]
+class FindServicesByLocationV2QueryHandler(
+    IRequestHandler[
+        FindServicesByLocationV2Query, PaginatedItemsViewModel[Dict[str, Any]]
+    ]
 ):
-    VALID_FIELDS = set(LocationEntity.__dataclass_fields__.keys())
-    REQUIRED_FIELDS = {"id"}
+    VALID_FIELDS = set(ServiceEntity2.__dataclass_fields__.keys())
+    REQUIRED_FIELDS = {"service_id"}
 
     def __init__(self) -> None:
         injector = injector_var.get()
-        self.location_repository = injector.get(LocationRepository)  # type: ignore[type-abstract]
+        self.service_repository = injector.get(ServiceRepository)  # type: ignore[type-abstract]
         self.data_shaper = DataShaper()
         self.filter_parser = FilterParserService()
 
     async def handle(
-        self, query: FindLocationRefactorQuery
+        self, query: FindServicesByLocationV2Query
     ) -> PaginatedItemsViewModel[Dict[str, Any]]:
         parsed_filters = self.filter_parser.parse_and_validate_filters(
-            filters_json=query.filters, filter_model=LocationFiltersModel
+            filters_json=query.filters, filter_model=ServiceFiltersModel
         )
 
-        repo_result = await self.location_repository.find_location_refactor(
+        repo_result = await self.service_repository.find_services_by_location_v2(
+            location_id=query.location_id,
             page_index=query.page_index,
             page_size=query.page_size,
             order_by=query.order_by,

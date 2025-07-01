@@ -17,8 +17,9 @@ from app.modules.share.domain.handler.request_handler import IRequestHandler
 
 # --- Importaciones del Módulo 'maintable' ---
 from app.modules.maintable.domain.entities.maintable_domain import MaintableEntity
-from app.modules.maintable.domain.repositories.maintable_repository import MaintableRepository
-
+from app.modules.maintable.domain.repositories.maintable_repository import (
+    MaintableRepository,
+)
 
 
 # ¡Importamos TUS ViewModels compartidos y genéricos!
@@ -29,12 +30,11 @@ from app.modules.share.aplication.view_models.paginated_items_view_model import 
 
 
 # --- 1. Definición del Query (El Mensaje de Solicitud) ---
-class GetMaintableByCriteriaQuery(BaseModel):
+class BaseMaintableQuery(BaseModel):
     """
-    Define los parámetros de entrada para la consulta de una tabla de mantenimiento.
+    Modelo base para consultas de tabla de mantenimiento sin table_name.
     """
-    table_name: str = Query(description="Nombre de la tabla a consultar"
-    )
+
     page_index: int = Query(
         ge=1, description="Número de página (mínimo 1, requerido)", example=1
     )
@@ -59,21 +59,30 @@ class GetMaintableByCriteriaQuery(BaseModel):
     )
     fields: Optional[str] = Query(
         default=None,
-        description="Campos a incluir separados por comas (ej: 'id,nombre_sede,telefono_sede')",
+        description="Campos a incluir separados por comas",
     )
 
 
+class GetMaintableByCriteriaQuery(BaseMaintableQuery):
+    """
+    Modelo completo incluyendo table_name para el handler.
+    """
+
+    table_name: str = ""
 
 
 # --- 3. Definición del Handler (El Orquestador) ---
 @Mediator.handler
 class GetMaintableByCriteriaQueryHandler(
-    IRequestHandler[GetMaintableByCriteriaQuery, PaginatedItemsViewModel[Dict[str, Any]]]
+    IRequestHandler[
+        GetMaintableByCriteriaQuery, PaginatedItemsViewModel[Dict[str, Any]]
+    ]
 ):
     """
     Handler que procesa GetMaintableByCriteriaQuery, coordina el repositorio y
     el DataShaper para devolver una respuesta paginada y moldeada.
     """
+
     # Los campos válidos se derivan del ViewModel público, no de la entidad interna.
     VALID_FIELDS = set(MaintableEntity.__dataclass_fields__.keys())
     REQUIRED_FIELDS = {"maintable_id"}
@@ -83,10 +92,12 @@ class GetMaintableByCriteriaQueryHandler(
         Constructor que utiliza el patrón Service Locator para obtener sus dependencias.
         """
         injector = injector_var.get()
-        self.repository = injector.get(MaintableRepository) # type: ignore
+        self.repository = injector.get(MaintableRepository)  # type: ignore
         self.data_shaper = DataShaper()
 
-    async def handle(self, query: GetMaintableByCriteriaQuery) -> PaginatedItemsViewModel[Dict[str, Any]]:
+    async def handle(
+        self, query: GetMaintableByCriteriaQuery
+    ) -> PaginatedItemsViewModel[Dict[str, Any]]:
         """
         Lógica principal del handler que orquesta el caso de uso.
         """
@@ -97,7 +108,7 @@ class GetMaintableByCriteriaQueryHandler(
             page_size=query.page_size,
             order_by=query.order_by,
             sort_by=query.sort_by,
-            query=query.query
+            query=query.query,
         )
 
         total_count = maintable_result.total_items

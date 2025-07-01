@@ -3,8 +3,10 @@ from typing import Union
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
-from app.modules.share.aplication.services.data_shaper_service import (
+
+from app.modules.share.domain.exceptions import (
     InvalidFieldsException,
+    InvalidFiltersException,
 )
 
 
@@ -50,6 +52,23 @@ async def invalid_fields_exception_handler(
                 "error": {
                     "status": 400,
                     "name": "InvalidFieldsError",
+                    "message": str(exc),
+                }
+            },
+        )
+    raise exc
+
+
+async def invalid_filters_exception_handler(  # NUEVO HANDLER
+    request: Request, exc: Exception
+) -> Union[JSONResponse]:
+    if isinstance(exc, InvalidFiltersException):
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": {
+                    "status": 400,
+                    "name": "InvalidFiltersError",
                     "message": str(exc),
                 }
             },

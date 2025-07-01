@@ -1,0 +1,418 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# API GET Endpoints Pattern V2 - Patrón Refactorizado
+
+## Descripción General
+
+Este patrón define la implementación estándar para endpoints GET versión 2 en nuestra arquitectura, incluyendo:
+- Query handlers refactorizados con DataShaper y paginación avanzada
+- Controladores V2 con respuesta estandarizada
+- Stored procedures optimizados
+- Repositorios con métodos refactorizados
+
+## 🏗️ Estructura de Archivos
+
+### 1. Query Handler Refactorizado
+**Ubicación**: `app/modules/{module}/application/queries/get_{entity}_refactor/get_{entity}_refactor_handler.py`
+
+```python
+import math
+from typing import Optional, Dict, Any, Literal
+from mediatr import Mediator
+from fastapi import Query
+from pydantic import BaseModel
+
+from app.constants import injector_var
+from app.modules.{module}.domain.entities.{entity}_domain import {Entity}Entity
+from app.modules.{module}.domain.repositories.{entity}_repository import {Entity}Repository
+from app.modules.share.aplication.services.data_shaper_service import DataShaper
+from app.modules.share.aplication.services.filter_parser_service import FilterParserService
+from app.modules.share.aplication.view_models.paginated_items_view_model import (
+    MetaPaginatedItemsViewModel,
+    PaginatedItemsViewModel,
+)
+from app.modules.share.domain.handler.request_handler import IRequestHandler
+
+
+class Find{Entity}RefactorQuery(BaseModel):
+    page_index: int = Query(ge=1, description="Número de página (mínimo 1, requerido)", example=1)
+    page_size: int = Query(ge=1, le=100, description="Tamaño de página (1-100, requerido)", example=10)
+    order_by: Literal[
+        "id",
+        # Agregar campos específicos de la entidad
+        "insert_date",
+        "update_date",
+    ] = Query(default="id", description="Campo por el cual ordenar")
+    sort_by: Literal["ASC", "DESC"] = Query(default="ASC", description="Dirección del ordenamiento")
+    query: Optional[str] = Query(default=None, description="Texto para buscar")
+    fields: Optional[str] = Query(
+        default=None,
+        description="Campos a incluir separados por comas (ej: 'id,name,email')",
+    )
+
+
+@Mediator.handler
+class FindAll{Entity}QueryHandler(
+    IRequestHandler[Find{Entity}RefactorQuery, PaginatedItemsViewModel[Dict[str, Any]]]
+):
+    VALID_FIELDS = set({Entity}Entity.__dataclass_fields__.keys())
+    REQUIRED_FIELDS = {"id"}
+
+    def __init__(self) -> None:
+        injector = injector_var.get()
+        self.{entity}_repository = injector.get({Entity}Repository)  # type: ignore[type-abstract]
+        self.data_shaper = DataShaper()
+        self.filter_parser = FilterParserService()
+
+    async def handle(
+        self, query: Find{Entity}RefactorQuery
+    ) -> PaginatedItemsViewModel[Dict[str, Any]]:
+        
+        repo_result = await self.{entity}_repository.find_{entity}_refactor(
+            page_index=query.page_index,
+            page_size=query.page_size,
+            order_by=query.order_by,
+            sort_by=query.sort_by,
+            query=query.query,
+        )
+
+        total_count = repo_result.total_items
+
+        shaped_data = self.data_shaper.shape_data(
+            data=repo_result.data,
+            fields=query.fields,
+            allowed_fields=self.VALID_FIELDS,
+            required_fields=self.REQUIRED_FIELDS,
+        )
+
+        total_pages = math.ceil(total_count / query.page_size)
+
+        meta = MetaPaginatedItemsViewModel(
+            page=query.page_index,
+            page_size=query.page_size,
+            page_count=total_pages,
+            total=total_count,
+        )
+
+        pagination = PaginatedItemsViewModel[Dict[str, Any]](
+            data=shaped_data, meta=meta
+        )
+
+        return pagination
+```
+
+### 2. Controlador V2
+**Ubicación**: `app/modules/{module}/presentation/routes/v2/{module}_v2_routes.py`
+
+```python
+from typing import Annotated, Any, Dict
+
+from fastapi import APIRouter, Depends, Query
+from mediatr import Mediator
+
+from app.modules.auth.presentation.dependencies.auth_dependencies import (
+    permission_required,
+)
+from app.modules.{module}.application.queries.get_{entity}_refactor.get_{entity}_refactor_handler import (
+    Find{Entity}RefactorQuery,
+)
+from app.modules.{module}.domain.entities.{entity}_domain import {Entity}Entity
+from app.modules.share.aplication.view_models.paginated_items_view_model import (
+    PaginatedItemsViewModel,
+)
+
+
+class {Entity}V2Controller:
+    def __init__(self, mediator: Mediator):
+        self.mediator = mediator
+        self.router = APIRouter()
+        self._add_routes()
+
+    def _add_routes(self) -> None:
+        self.router.get(
+            "/{entity}",
+            dependencies=[Depends(permission_required(roles=["admin", "staff"]))],
+            responses={
+                200: {
+                    "description": "Lista paginada de {entity}s",
+                    "model": PaginatedItemsViewModel[{Entity}Entity],
+                }
+            },
+        )(self.get_{entity}s)
+
+    async def get_{entity}s(
+        self, query_params: Annotated[Find{Entity}RefactorQuery, Query()]
+    ) -> PaginatedItemsViewModel[Dict[str, Any]]:
+        """
+        Obtiene una lista paginada de {entity}s con filtros dinámicos
+        """
+        result: PaginatedItemsViewModel[
+            Dict[str, Any]
+        ] = await self.mediator.send_async(query_params)
+        return result
+```
+
+### 3. Método en Repositorio Abstracto
+**Ubicación**: `app/modules/{module}/domain/repositories/{entity}_repository.py`
+
+```python
+@abstractmethod
+async def find_{entity}_refactor(
+    self,
+    page_index: int,
+    page_size: int,
+    order_by: str,
+    sort_by: str,
+    query: Optional[str] = None,
+) -> ResponseListRefactor[{Entity}Entity]:
+    """
+    Método abstracto para buscar {entity}s con paginación refactorizada.
+    
+    Args:
+        page_index: Índice de la página.
+        page_size: Tamaño de la página.
+        order_by: Campo por el cual ordenar.
+        sort_by: Dirección del ordenamiento ('ASC' o 'DESC').
+        query: Término de búsqueda opcional.
+    
+    Returns:
+        ResponseListRefactor[{Entity}Entity]: Lista paginada de {entity}s.
+    """
+    pass
+```
+
+### 4. Implementación del Repositorio
+**Ubicación**: `app/modules/{module}/infra/repositories/{entity}_implementation_repository.py`
+
+```python
+async def find_{entity}_refactor(
+    self,
+    page_index: int,
+    page_size: int,
+    order_by: str,
+    sort_by: str,
+    query: Optional[str] = None,
+) -> ResponseListRefactor[{Entity}Entity]:
+    """
+    Implementación refactorizada para buscar {entity}s con paginación.
+    Llama al procedimiento almacenado '{table}_get_{entity}s_refactor' en PostgreSQL.
+    """
+    stmt = text("""
+        SELECT * FROM {table}_get_{entity}s_refactor(
+            :page_index, :page_size, :order_by, :sort_by, :query
+        )
+    """)
+
+    try:
+        result = await self._uow.session.execute(
+            stmt,
+            {
+                "page_index": page_index,
+                "page_size": page_size,
+                "order_by": order_by,
+                "sort_by": sort_by,
+                "query": query,
+            },
+        )
+
+        row = result.fetchone()
+        if not row:
+            return ResponseListRefactor(data=[], total_items=0)
+
+        data_json = row.data  # JSON array de los {entity}s
+        total_items = row.total_items
+
+        # Convertir el JSON a lista de {Entity}Entity
+        {entity}s_list: list[{Entity}Entity] = []
+
+        if data_json:  # Si hay datos
+            for item in data_json:
+                # Parsear fechas opcionales si existen
+                # Crear {Entity}Entity
+                {entity} = {Entity}Entity(
+                    # Mapear campos según la entidad
+                    **item
+                )
+                {entity}s_list.append({entity})
+
+        return ResponseListRefactor(data={entity}s_list, total_items=total_items)
+
+    except DBAPIError as e:
+        handle_error(e)
+        raise RuntimeError("Este punto nunca se alcanza")
+```
+
+### 5. Stored Procedure
+**Ubicación**: Base de datos PostgreSQL
+
+```sql
+CREATE OR REPLACE FUNCTION {table}_get_{entity}s_refactor(
+    p_page_index INTEGER DEFAULT 1, 
+    p_page_size INTEGER DEFAULT 10, 
+    p_order_by CHARACTER VARYING DEFAULT 'id'::CHARACTER VARYING, 
+    p_sort_by CHARACTER VARYING DEFAULT 'ASC'::CHARACTER VARYING, 
+    p_query CHARACTER VARYING DEFAULT NULL::CHARACTER VARYING
+)
+RETURNS TABLE(data JSON, total_items INTEGER)
+LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    v_offset INTEGER;
+    v_total_count INTEGER;
+    v_data JSON;
+BEGIN
+    v_offset := (p_page_index - 1) * p_page_size;
+    
+    -- 🔥 UNA SOLA CTE CON FILTROS APLICADOS
+    WITH filtered_{entity}s AS (
+        SELECT 
+            -- Campos específicos de la tabla
+            t.id, 
+            t.field1,
+            t.field2,
+            t.insert_date, 
+            t.update_date, 
+            t.user_create, 
+            t.user_modify
+        FROM {table} t
+        WHERE t.annulled = false
+          AND (p_query IS NULL OR p_query = '' OR LOWER(t.search_field) LIKE LOWER('%' || p_query || '%'))
+    ),
+    -- Count desde la CTE filtrada
+    count_result AS (
+        SELECT COUNT(*) as total FROM filtered_{entity}s
+    ),
+    -- Datos paginados desde la CTE filtrada
+    ordered_{entity}s AS (
+        SELECT * FROM filtered_{entity}s
+        ORDER BY 
+            CASE WHEN p_order_by = 'id' AND p_sort_by = 'ASC' THEN id END ASC,
+            CASE WHEN p_order_by = 'id' AND p_sort_by = 'DESC' THEN id END DESC,
+            -- Agregar más campos de ordenamiento según la entidad
+            CASE WHEN p_order_by = 'insert_date' AND p_sort_by = 'ASC' THEN insert_date END ASC,
+            CASE WHEN p_order_by = 'insert_date' AND p_sort_by = 'DESC' THEN insert_date END DESC
+        LIMIT p_page_size OFFSET v_offset
+    )
+    
+    -- 🔥 COMBINAR COUNT Y DATA EN UNA SOLA QUERY
+    SELECT 
+        (SELECT JSON_AGG(
+            JSON_BUILD_OBJECT(
+                'id', id,
+                'field1', field1,
+                'field2', field2,
+                'insert_date', insert_date,
+                'update_date', update_date,
+                'user_create', user_create,
+                'user_modify', user_modify
+            )
+        ) FROM ordered_{entity}s),
+        (SELECT total FROM count_result)
+    INTO v_data, v_total_count;
+
+    RETURN QUERY SELECT v_data, v_total_count;
+END;
+$$;
+
+ALTER FUNCTION {table}_get_{entity}s_refactor(INTEGER, INTEGER, VARCHAR, VARCHAR, VARCHAR) OWNER TO postgres;
+```
+
+### 6. Configuración en V2 App
+**Ubicación**: `app/versions/v2_app.py`
+
+```python
+from app.modules.{module}.presentation.routes.v2.{module}_v2_routes import (
+    {Entity}V2Controller,
+)
+
+def create_v2_app(mediator: Optional[Mediator] = None) -> FastAPI:
+    # ... código existente ...
+    
+    # Inicializar controllers de v2
+    {entity}_controller = {Entity}V2Controller(mediator)
+    
+    # Incluir rutas
+    app.include_router({entity}_controller.router, tags=["{Entity}"])
+    
+    return app
+```
+
+## 🎯 Características Implementadas
+
+### ✅ **Query Handler**:
+- Paginación avanzada con `page_index` y `page_size` 
+- Ordenamiento dinámico por cualquier campo
+- Búsqueda por texto opcional
+- Selección dinámica de campos con `DataShaper`
+- Sin filtros (simplificado vs location)
+
+### ✅ **Controlador V2**:
+- Endpoint estandardizado `/api/v2/{entity}`
+- Respuesta `PaginatedItemsViewModel[Dict[str, Any]]`
+- Permisos configurables
+- Documentación automática de OpenAPI
+
+### ✅ **Repositorio**:
+- Método `find_{entity}_refactor()` estandardizado  
+- Uso de `ResponseListRefactor[{Entity}Entity]`
+- Manejo robusto de errores con `handle_error`
+- Mapeo de JSON a entidades de dominio
+
+### ✅ **Stored Procedure**:
+- Optimización con CTEs (Common Table Expressions)
+- Filtro automático por `annulled = false`
+- Ordenamiento dinámico con CASE statements
+- Búsqueda por texto opcional
+- Respuesta JSON estructurada
+
+## 🔄 Diferencias con V1
+
+| Aspecto | V1 | V2 Refactorizado |
+|---------|----|--------------------|
+| **Respuesta** | `PaginatedItemsViewModel[{Entity}QueryResponse]` | `PaginatedItemsViewModel[Dict[str, Any]]` |
+| **Selección de campos** | Campos fijos | Dinámica con `DataShaper` |
+| **Ordenamiento** | Limitado | Por cualquier campo |
+| **Búsqueda** | Básica | Avanzada con texto |
+| **Stored Procedure** | Simple | Optimizado con CTEs |
+
+## 📋 Parámetros Estándar V2
+
+```
+- page_index: int (≥1) 
+- page_size: int (1-100)
+- order_by: Campo de la entidad
+- sort_by: "ASC" | "DESC" 
+- query: str (opcional, búsqueda por texto)
+- fields: str (opcional, campos separados por comas)
+```
+
+## 🚀 Endpoints Resultantes
+
+- **V1**: `GET /api/v1/{entity}` (implementación original)
+- **V2**: `GET /api/v2/{entity}` (implementación refactorizada)
+
+## 📝 Notas de Implementación
+
+1. **Crear directorios**: Asegurar que existe `app/modules/{module}/application/queries/get_{entity}_refactor/`
+2. **Archivos __init__.py**: Crear en nuevos directorios
+3. **Importaciones**: Verificar que `ResponseListRefactor` esté importado en repositorios
+4. **Tests**: Implementar tests para la nueva funcionalidad
+5. **Documentación**: Actualizar documentación de API
+
+## 🎯 Validación de Implementación
+
+- [ ] Query handler creado con DataShaper
+- [ ] Controlador V2 configurado correctamente  
+- [ ] Método repositorio abstracto agregado
+- [ ] Implementación repositorio funcional
+- [ ] Stored procedure creado y optimizado
+- [ ] Endpoint V2 agregado a la aplicación
+- [ ] Tests implementados
+- [ ] Documentación actualizada
+
+Este patrón garantiza consistencia, escalabilidad y mantenibilidad en todos los endpoints GET de la aplicación.
+

@@ -5,9 +5,9 @@ from fastapi import Query
 from pydantic import BaseModel, Field
 
 from app.constants import injector_var
-from app.modules.location.domain.entities.location_domain import LocationEntity
-from app.modules.location.domain.repositories.location_repository import (
-    LocationRepository,
+from app.modules.customer.domain.entities.customer_domain import CustomerEntity
+from app.modules.customer.domain.repositories.customer_repository import (
+    CustomerRepository,
 )
 
 from app.modules.share.aplication.services.data_shaper_service import DataShaper
@@ -21,7 +21,7 @@ from app.modules.share.aplication.view_models.paginated_items_view_model import 
 from app.modules.share.domain.handler.request_handler import IRequestHandler
 
 
-class FindLocationRefactorQuery(BaseModel):
+class FindCustomerRefactorQuery(BaseModel):
     page_index: int = Query(
         ge=1, description="Número de página (mínimo 1, requerido)", example=1
     )
@@ -30,40 +30,39 @@ class FindLocationRefactorQuery(BaseModel):
     )
     order_by: Literal[
         "id",
-        "nombre_sede",
-        "telefono_sede",
-        "direccion_sede",
+        "name_customer",
+        "email_customer",
+        "phone_customer",
+        "birthdate_customer",
+        "status_customer",
         "insert_date",
         "update_date",
-        "status",
     ] = Query(default="id", description="Campo por el cual ordenar")
     sort_by: Literal["ASC", "DESC"] = Query(
         default="ASC", description="Dirección del ordenamiento"
     )
     query: Optional[str] = Query(
-        default=None, description="Texto para buscar en nombre_sede"
+        default=None, description="Texto para buscar en name_customer"
     )
 
     fields: Optional[str] = Query(
         default=None,
-        description="Campos a incluir separados por comas (ej: 'id,nombre_sede,telefono_sede')",
+        description="Campos a incluir separados por comas (ej: 'id,name_customer,email_customer')",
     )
 
     filters: Optional[str] = Query(
         default=None,
-        description='Filtros en formato JSON: {"status": true, "user_create": "usuario@email.com"}',
-        example='{"status": true}',
+        description='Filtros en formato JSON: {"status_customer": "active"}',
+        example='{"status_customer": "active"}',
     )
 
 
-class LocationFiltersModel(BaseModel):
-    """Filtros específicos permitidos para locations"""
+class CustomerFiltersModel(BaseModel):
+    """Filtros específicos permitidos para customers"""
 
-    status: Optional[bool] = Field(
-        default=None, description="Filtrar por estado activo/inactivo"
-    )
-    user_create: Optional[str] = Field(
-        default=None, description="Filtrar por usuario creador"
+    status_customer: Optional[Literal["active", "blocked"]] = Field(
+        default=None,
+        description="Filtrar por estado del cliente (active, blocked)",
     )
 
     class Config:
@@ -71,26 +70,26 @@ class LocationFiltersModel(BaseModel):
 
 
 @Mediator.handler
-class FindAllLocationQueryHandler(
-    IRequestHandler[FindLocationRefactorQuery, PaginatedItemsViewModel[Dict[str, Any]]]
+class FindAllCustomerQueryHandler(
+    IRequestHandler[FindCustomerRefactorQuery, PaginatedItemsViewModel[Dict[str, Any]]]
 ):
-    VALID_FIELDS = set(LocationEntity.__dataclass_fields__.keys())
+    VALID_FIELDS = set(CustomerEntity.__dataclass_fields__.keys())
     REQUIRED_FIELDS = {"id"}
 
     def __init__(self) -> None:
         injector = injector_var.get()
-        self.location_repository = injector.get(LocationRepository)  # type: ignore[type-abstract]
+        self.customer_repository = injector.get(CustomerRepository)  # type: ignore[type-abstract]
         self.data_shaper = DataShaper()
         self.filter_parser = FilterParserService()
 
     async def handle(
-        self, query: FindLocationRefactorQuery
+        self, query: FindCustomerRefactorQuery
     ) -> PaginatedItemsViewModel[Dict[str, Any]]:
         parsed_filters = self.filter_parser.parse_and_validate_filters(
-            filters_json=query.filters, filter_model=LocationFiltersModel
+            filters_json=query.filters, filter_model=CustomerFiltersModel
         )
 
-        repo_result = await self.location_repository.find_location_refactor(
+        repo_result = await self.customer_repository.find_customer_refactor(
             page_index=query.page_index,
             page_size=query.page_size,
             order_by=query.order_by,

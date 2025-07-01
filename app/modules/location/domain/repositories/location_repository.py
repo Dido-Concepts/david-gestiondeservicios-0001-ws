@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from app.modules.location.domain.entities.location_domain import (
     LocationEntity,
@@ -45,6 +45,7 @@ class LocationRepository(ABC):
         order_by: str,
         sort_by: str,
         query: Optional[str] = None,
+        filters: Optional[Dict[str, Any]] = None,
     ) -> ResponseListRefactor[LocationEntity]:
         pass
 

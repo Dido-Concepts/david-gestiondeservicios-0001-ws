@@ -1,5 +1,5 @@
 import json
-from typing import Annotated, Any, Dict, Optional
+from typing import Annotated, Optional
 
 from fastapi import (
     APIRouter,
@@ -38,9 +38,7 @@ from app.modules.location.application.queries.get_location_by_id.get_location_by
     GetLocationByIdQuery,
     GetLocationByIdResponse,
 )
-from app.modules.location.application.queries.get_location_refact.get_location_refact_handler import (
-    FindLocationRefactorQuery,
-)
+
 from app.modules.location.domain.entities.location_domain import LocationEntity
 from app.modules.location.application.queries.get_locations.get_locations_handler import (
     FindAllLocationQuery,
@@ -203,74 +201,6 @@ class LocationController:
             },
         )(self.change_schedule_location)
 
-        self.router.get(
-            "/location-refac",
-            dependencies=[Depends(permission_required(roles=["admin"]))],
-            openapi_extra={
-                "responses": {
-                    "200": {
-                        "description": "Lista paginada de ubicaciones con campos dinámicos",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "data": [
-                                        {
-                                            "id": 1,
-                                            "nombre_sede": "Ubicación Ejemplo 1",
-                                            "telefono_sede": "123456789",
-                                            "direccion_sede": "Dirección de ejemplo 1",
-                                            "insert_date": "2024-01-01T12:00:00.000000",
-                                            "update_date": "2024-01-02T14:30:00.000000",
-                                            "user_create": "usuario@test.com",
-                                            "user_modify": "usuario@test.com",
-                                            "review_location": "Comentario de ejemplo",
-                                            "status": True,
-                                            "file": {
-                                                "id": 1,
-                                                "url": "https://example.com/imagen1.jpg",
-                                                "filename": "imagen1.jpg",
-                                                "content_type": "image/jpeg",
-                                                "size": 123456,
-                                                "insert_date": "2024-01-01T12:00:00.000000",
-                                                "update_date": None,
-                                            },
-                                        },
-                                        {
-                                            "id": 2,
-                                            "nombre_sede": "Ubicación Ejemplo 2",
-                                            "telefono_sede": "987654321",
-                                            "direccion_sede": "Dirección de ejemplo 2",
-                                            "insert_date": "2024-01-01T12:00:00.000000",
-                                            "update_date": None,
-                                            "user_create": "usuario@test.com",
-                                            "user_modify": None,
-                                            "review_location": "Otro comentario de ejemplo",
-                                            "status": False,
-                                            "file": {
-                                                "id": 2,
-                                                "url": "https://example.com/imagen2.png",
-                                                "filename": "imagen2.png",
-                                                "content_type": "image/png",
-                                                "size": 654321,
-                                                "insert_date": "2024-01-01T12:00:00.000000",
-                                                "update_date": "2024-01-03T10:15:00.000000",
-                                            },
-                                        },
-                                    ],
-                                    "meta": {
-                                        "page": 1,
-                                        "page_size": 10,
-                                        "page_count": 1,
-                                        "total": 2,
-                                    },
-                                }
-                            }
-                        },
-                    }
-                }
-            },
-        )(self.get_locations_refactor)
-
     async def create_location(
         self,
         name_location: Annotated[str, Form()],
@@ -305,14 +235,6 @@ class LocationController:
     ) -> PaginatedItemsViewModel[FindAllLocationQueryResponse]:
         result: PaginatedItemsViewModel[
             FindAllLocationQueryResponse
-        ] = await self.mediator.send_async(query_params)
-        return result
-
-    async def get_locations_refactor(
-        self, query_params: FindLocationRefactorQuery = Depends()
-    ) -> PaginatedItemsViewModel[Dict[str, Any]]:
-        result: PaginatedItemsViewModel[
-            Dict[str, Any]
         ] = await self.mediator.send_async(query_params)
         return result
 

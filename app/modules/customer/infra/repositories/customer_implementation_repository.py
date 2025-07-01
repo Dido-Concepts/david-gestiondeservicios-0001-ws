@@ -1,7 +1,8 @@
 # customer_implementation_repository.py
 
 from datetime import date, datetime
-from typing import Optional
+from typing import Optional, Dict, Any
+import json
 
 from fastapi import HTTPException  # Necesario para levantar errores HTTP
 
@@ -17,7 +18,10 @@ from app.modules.customer.domain.entities.customer_domain import CustomerEntity
 from app.modules.customer.domain.repositories.customer_repository import (
     CustomerRepository,
 )
-from app.modules.share.domain.repositories.repository_types import ResponseList
+from app.modules.share.domain.repositories.repository_types import (
+    ResponseList,
+    ResponseListRefactor,
+)
 from app.modules.share.infra.persistence.unit_of_work import UnitOfWork
 from app.modules.share.utils.handle_dbapi_error import handle_error
 
@@ -77,7 +81,9 @@ class CustomerImplementationRepository(CustomerRepository):
             return customer_id
         except DBAPIError as e:
             handle_error(e)
-            raise RuntimeError("Este punto nunca se alcanza")  # handle_error siempre levanta excepción
+            raise RuntimeError(
+                "Este punto nunca se alcanza"
+            )  # handle_error siempre levanta excepción
 
     async def find_customers(
         self, page_index: int, page_size: int, query: Optional[str] = None
@@ -100,7 +106,7 @@ class CustomerImplementationRepository(CustomerRepository):
                 {
                     "page_index": page_index,
                     "page_size": page_size,
-                    "search_name_query": query
+                    "search_name_query": query,
                 },
             )
             # Obtiene el resultado JSON devuelto por la función almacenada
@@ -143,7 +149,88 @@ class CustomerImplementationRepository(CustomerRepository):
             return response
         except DBAPIError as e:
             handle_error(e)
-            raise RuntimeError("Este punto nunca se alcanza")  # handle_error siempre levanta excepción
+            raise RuntimeError(
+                "Este punto nunca se alcanza"
+            )  # handle_error siempre levanta excepción
+
+    async def find_customer_refactor(
+        self,
+        page_index: int,
+        page_size: int,
+        order_by: str,
+        sort_by: str,
+        query: Optional[str] = None,
+        filters: Optional[Dict[str, Any]] = None,
+    ) -> ResponseListRefactor[CustomerEntity]:
+        """
+        Implementación refactorizada para buscar clientes con paginación.
+        Llama al procedimiento almacenado 'customer_get_customers_refactor' en PostgreSQL.
+        """
+        filters_json = json.dumps(filters) if filters else "{}"
+
+        stmt = text("""
+            SELECT * FROM customer_get_customers_refactor(
+                :page_index, :page_size, :order_by, :sort_by, :query, CAST(:filters AS JSONB)
+            )
+        """)
+
+        try:
+            result = await self._uow.session.execute(
+                stmt,
+                {
+                    "page_index": page_index,
+                    "page_size": page_size,
+                    "order_by": order_by,
+                    "sort_by": sort_by,
+                    "query": query,
+                    "filters": filters_json,
+                },
+            )
+
+            row = result.fetchone()
+            if not row:
+                return ResponseListRefactor(data=[], total_items=0)
+
+            data_json = row.data  # JSON array de los clientes
+            total_items = row.total_items
+
+            # Convertir el JSON a lista de CustomerEntity
+            customers_list: list[CustomerEntity] = []
+
+            if data_json:  # Si hay datos
+                for item in data_json:
+                    # Parsear fechas opcionales
+                    birthdate_obj = None
+                    if item.get("birthdate_customer"):
+                        birthdate_obj = date.fromisoformat(item["birthdate_customer"])
+
+                    update_date_obj = None
+                    if item.get("update_date"):
+                        update_date_obj = datetime.fromisoformat(item["update_date"])
+
+                    # Crear CustomerEntity
+                    customer = CustomerEntity(
+                        id=item["id"],
+                        name_customer=item["name_customer"],
+                        email_customer=item.get("email_customer"),
+                        phone_customer=item.get("phone_customer"),
+                        birthdate_customer=birthdate_obj,
+                        status_customer=item["status_customer"],
+                        insert_date=datetime.fromisoformat(item["insert_date"])
+                        if item["insert_date"]
+                        else datetime.now(),
+                        update_date=update_date_obj,
+                        user_create=item["user_create"],
+                        user_modify=item.get("user_modify"),
+                    )
+
+                    customers_list.append(customer)
+
+            return ResponseListRefactor(data=customers_list, total_items=total_items)
+
+        except DBAPIError as e:
+            handle_error(e)
+            raise RuntimeError("Este punto nunca se alcanza")
 
     async def update_details_customer(
         self,
@@ -201,7 +288,9 @@ class CustomerImplementationRepository(CustomerRepository):
 
         except DBAPIError as e:
             handle_error(e)
-            raise RuntimeError("Este punto nunca se alcanza")  # handle_error siempre levanta excepción
+            raise RuntimeError(
+                "Este punto nunca se alcanza"
+            )  # handle_error siempre levanta excepción
 
     async def change_status_customer(self, customer_id: int, user_modify: str) -> str:
         """
@@ -226,7 +315,9 @@ class CustomerImplementationRepository(CustomerRepository):
             response: str = result.scalar_one()
 
             # Verifica si la respuesta de la función indica un error conocido.
-            if response.startswith("Cliente no encontrado") or response.startswith("Estado actual"):  # Mejorado para capturar ambos errores de SP
+            if response.startswith("Cliente no encontrado") or response.startswith(
+                "Estado actual"
+            ):  # Mejorado para capturar ambos errores de SP
                 status_code = 404 if "Cliente no encontrado" in response else 400
                 raise HTTPException(status_code=status_code, detail=response)
 
@@ -235,7 +326,9 @@ class CustomerImplementationRepository(CustomerRepository):
 
         except DBAPIError as e:
             handle_error(e)
-            raise RuntimeError("Este punto nunca se alcanza")  # handle_error siempre levanta excepción
+            raise RuntimeError(
+                "Este punto nunca se alcanza"
+            )  # handle_error siempre levanta excepción
 
     # --- NUEVO MÉTODO IMPLEMENTADO ---
     async def delete_customer(self, customer_id: int, user_modify: str) -> str:
@@ -273,7 +366,9 @@ class CustomerImplementationRepository(CustomerRepository):
                 # Si la función devuelve el error de cliente no encontrado,
                 # levantamos una excepción HTTP 404 (Not Found).
                 raise HTTPException(status_code=404, detail=response)
-            elif response.startswith("Error:"):  # Captura otros errores que empiecen con "Error:"
+            elif response.startswith(
+                "Error:"
+            ):  # Captura otros errores que empiecen con "Error:"
                 # Para otros errores inesperados devueltos por la función que empiecen con "Error:"
                 # (aunque el SP actual solo define uno explícito), lanzamos un 400.
                 # Podríamos usar 500 si consideramos que son errores internos del SP no previstos.
@@ -291,4 +386,6 @@ class CustomerImplementationRepository(CustomerRepository):
             handle_error(e)
             # Esta línea teóricamente no se alcanza si handle_error siempre levanta una excepción.
             raise RuntimeError("Este punto nunca se alcanza")
+
+
 #
