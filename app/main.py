@@ -1,3 +1,5 @@
+import logging
+from pathlib import Path
 from typing import Awaitable, Callable, Dict, Any, Optional
 
 from fastapi import FastAPI, Request, Response
@@ -30,12 +32,19 @@ from app.modules.share.infra.mediator_config import MediatorManager
 from app.versions.v1_app import create_v1_app
 from app.versions.v2_app import create_v2_app
 
-# Configurar templates
-templates = Jinja2Templates(directory="app/templates")
+# Configurar templates con ruta robusta
+# Obtener la ruta del directorio actual del módulo app
+app_dir = Path(__file__).parent
+templates_dir = app_dir / "templates"
+
+# Si no existe, intentar ruta relativa (para desarrollo)
+if not templates_dir.exists():
+    templates_dir = Path("app/templates")
+
+templates = Jinja2Templates(directory=str(templates_dir))
 
 
 # ===== CONFIGURACIÓN GLOBAL DE LOGGING =====
-import logging
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
