@@ -6,6 +6,9 @@ from mediatr import Mediator
 
 from app.modules.share.infra.mediator_config import MediatorManager
 from app.modules.auth.presentation.routes.v1.auth_v1_routes import AuthController
+from app.modules.auth.presentation.routes.v1.app_to_app_auth_routes import (
+    router as app_to_app_router,
+)
 from app.modules.customer.presentation.routes.v1.customer_v1_routes import (
     CustomerController,
 )
@@ -68,6 +71,7 @@ def create_v1_app(mediator: Optional[Mediator] = None) -> FastAPI:
     app.include_router(user_controller.router, tags=["User"])
     app.include_router(role_controller.router, tags=["Role"])
     app.include_router(auth_controller.router, tags=["Auth"])
+    app.include_router(app_to_app_router)  # Rutas de autenticación app-to-app
     app.include_router(location_controller.router, tags=["Location"])
     app.include_router(customer_controller.router, tags=["Customer"])
     app.include_router(category_controller.router, tags=["Service"])

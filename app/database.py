@@ -1,8 +1,13 @@
 from os import getenv
 
+from dotenv import load_dotenv
+
 # from sqlalchemy import create_engine  # for migration
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
+
+# Cargar variables de entorno desde el archivo .env
+load_dotenv()
 
 SQLALCHEMY_DATABASE_URL = getenv("DATABASE_PUBLIC_URL", "")
 
