@@ -4,7 +4,7 @@ from injector import Injector
 
 from app.modules.share.infra.persistence.unit_of_work import UnitOfWork
 
-origins = ["http://localhost"]
+origins = ["http://localhost:3000", "http://localhost:8000"]
 
 prefix_v1 = "/api/v1"
 prefix_v2 = "/api/v2"
