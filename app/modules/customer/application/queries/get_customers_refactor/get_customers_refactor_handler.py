@@ -52,7 +52,7 @@ class FindCustomerRefactorQuery(BaseModel):
 
     filters: Optional[str] = Query(
         default=None,
-        description='Filtros en formato JSON: {"status_customer": "active"}',
+        description='Filtros en formato JSON: {"status_customer": "active"} Actualmente solo se permite filtrar por status_customer y phone_customer',
         example='{"status_customer": "active"}',
     )
 
@@ -63,6 +63,11 @@ class CustomerFiltersModel(BaseModel):
     status_customer: Optional[Literal["active", "blocked"]] = Field(
         default=None,
         description="Filtrar por estado del cliente (active, blocked)",
+    )
+
+    phone_customer: Optional[str] = Field(
+        default=None,
+        description="Filtrar por número de teléfono del cliente",
     )
 
     class Config:
