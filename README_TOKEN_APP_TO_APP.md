@@ -27,10 +27,12 @@ Authorization: Bearer TU_TOKEN_DE_GOOGLE_AQUI
 **Body:**
 ```json
 {
-    "app_name": "n8n-integration",
-    "description": "Token para integración con n8n",
-    "expires_in_days": 365,
-    "allowed_scopes": ["admin", "read", "write", "api"]
+  "app_name": "n8n",
+  "description": "string",
+  "expires_in_days": 365,
+  "allowed_scopes": [
+    "admin"
+  ]
 }
 ```
 
