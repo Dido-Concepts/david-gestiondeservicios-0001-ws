@@ -14,7 +14,9 @@ _database_url = getenv("DATABASE_PUBLIC_URL", "")
 
 # Si la URL es de PostgreSQL pero no tiene +asyncpg, agregarlo automáticamente
 if _database_url.startswith("postgresql://") and "+asyncpg" not in _database_url:
-    SQLALCHEMY_DATABASE_URL = _database_url.replace("postgresql://", "postgresql+asyncpg://")
+    SQLALCHEMY_DATABASE_URL = _database_url.replace(
+        "postgresql://", "postgresql+asyncpg://"
+    )
 else:
     SQLALCHEMY_DATABASE_URL = _database_url
 
