@@ -30,6 +30,7 @@ injector = "^0.22.0"
 python-multipart = "^0.0.20"
 cloudinary = "^1.43.0"
 python-dotenv = "^1.1.1"
+greenlet = "^3.2.4"
 
 
 [tool.poetry.group.dev.dependencies]

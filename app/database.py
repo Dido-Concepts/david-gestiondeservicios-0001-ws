@@ -9,7 +9,14 @@ from sqlalchemy.orm import DeclarativeBase
 # Cargar variables de entorno desde el archivo .env
 load_dotenv()
 
-SQLALCHEMY_DATABASE_URL = getenv("DATABASE_PUBLIC_URL", "")
+# Obtener la URL de la base de datos y agregar +asyncpg si es necesario
+_database_url = getenv("DATABASE_PUBLIC_URL", "")
+
+# Si la URL es de PostgreSQL pero no tiene +asyncpg, agregarlo automáticamente
+if _database_url.startswith("postgresql://") and "+asyncpg" not in _database_url:
+    SQLALCHEMY_DATABASE_URL = _database_url.replace("postgresql://", "postgresql+asyncpg://")
+else:
+    SQLALCHEMY_DATABASE_URL = _database_url
 
 
 class Base(DeclarativeBase):

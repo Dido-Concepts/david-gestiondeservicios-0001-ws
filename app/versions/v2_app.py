@@ -1,20 +1,21 @@
-from typing import Optional
 import logging
+from typing import Optional
 
 from fastapi import FastAPI
 from mediatr import Mediator
 
-from app.modules.share.infra.mediator_config import MediatorManager
-from app.modules.test.presentation.routes.v2.test_v2_routes import TestController
-from app.modules.location.presentation.routes.v2.location_v2_routes import (
-    LocationV2Controller,
-)
 from app.modules.customer.presentation.routes.v2.customer_v2_routes import (
     CustomerV2Controller,
+)
+from app.modules.location.presentation.routes.v2.location_v2_routes import (
+    LocationV2Controller,
 )
 from app.modules.services.presentation.routes.v2.services_v2_routes import (
     ServicesV2Controller,
 )
+from app.modules.share.infra.mediator_config import MediatorManager
+from app.modules.staff.presentation.routes.staff_controller import StaffController
+from app.modules.test.presentation.routes.v2.test_v2_routes import TestController
 
 
 def create_v2_app(mediator: Optional[Mediator] = None) -> FastAPI:
@@ -41,11 +42,13 @@ def create_v2_app(mediator: Optional[Mediator] = None) -> FastAPI:
     location_controller = LocationV2Controller(mediator)
     customer_controller = CustomerV2Controller(mediator)
     services_controller = ServicesV2Controller(mediator)
+    staff_controller = StaffController(mediator)
 
     # Incluir rutas sin prefijo adicional ya que están montadas en /api/v2
     app.include_router(test_controller.router, tags=["Test"])
     app.include_router(location_controller.router, tags=["Location"])
     app.include_router(customer_controller.router, tags=["Customer"])
     app.include_router(services_controller.router, tags=["Services"])
+    app.include_router(staff_controller.router, tags=["Staff"])
 
     return app
