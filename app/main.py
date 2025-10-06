@@ -1,20 +1,23 @@
 import logging
 from pathlib import Path
-from typing import Awaitable, Callable, Dict, Any, Optional
+from typing import Any, Awaitable, Callable, Dict, Optional
 
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from injector import Injector
 from mediatr import Mediator
 
-from app.constants import injector_var, origins, uow_var, prefix_v1, prefix_v2
+from app.constants import injector_var, origins, prefix_v1, prefix_v2, uow_var
 from app.database import create_session
 from app.modules.share.domain.exceptions import (
     InvalidFieldsException,
     InvalidFiltersException,
+)
+from app.modules.share.infra.custom_validation_handler import (
+    custom_validation_exception_handler,
 )
 from app.modules.share.infra.di_config import AppModule
 from app.modules.share.infra.exception_handlers import (
@@ -24,11 +27,8 @@ from app.modules.share.infra.exception_handlers import (
     runtime_error_handler,
     value_error_handler,
 )
-from app.modules.share.infra.custom_validation_handler import (
-    custom_validation_exception_handler,
-)
-from app.modules.share.infra.persistence.unit_of_work import UnitOfWork
 from app.modules.share.infra.mediator_config import MediatorManager
+from app.modules.share.infra.persistence.unit_of_work import UnitOfWork
 from app.versions.v1_app import create_v1_app
 from app.versions.v2_app import create_v2_app
 
