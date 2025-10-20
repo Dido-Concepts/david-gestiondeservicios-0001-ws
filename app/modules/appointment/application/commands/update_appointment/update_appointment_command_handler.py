@@ -45,15 +45,6 @@ class UpdateAppointmentCommand(BaseModel):
             raise ValueError("end_datetime debe ser posterior a start_datetime")
         return v
 
-    @field_validator("start_datetime")
-    def validate_start_datetime_future(cls, v: datetime) -> datetime:
-        """
-        Valida que start_datetime sea en el futuro.
-        """
-        if v <= datetime.now():
-            raise ValueError("start_datetime debe ser una fecha y hora futura")
-        return v
-
 
 # --- Definición del Manejador del Comando ---
 @Mediator.handler

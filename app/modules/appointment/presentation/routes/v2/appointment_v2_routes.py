@@ -134,8 +134,8 @@ class AppointmentV2Controller:
         - end_datetime: Fecha y hora de fin de la cita
 
         Las fechas se validan automáticamente:
-        - start_datetime debe ser en el futuro
         - end_datetime debe ser posterior a start_datetime
+        - Se permite crear citas tanto futuras como pasadas
         """
         if not current_user.email:
             raise ValueError("User email not found in token")
@@ -175,9 +175,9 @@ class AppointmentV2Controller:
         - end_datetime: Fecha y hora de fin de la cita
 
         Las fechas se validan automáticamente:
-        - start_datetime debe ser en el futuro
         - end_datetime debe ser posterior a start_datetime
         - No debe haber conflictos con otras citas del mismo empleado
+        - Se permite actualizar citas tanto futuras como pasadas
         """
         if not current_user.email:
             raise ValueError("User email not found in token")

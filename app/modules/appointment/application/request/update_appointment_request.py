@@ -36,14 +36,8 @@ class UpdateAppointmentRequest(BaseModel):
             raise ValueError("end_datetime debe ser posterior a start_datetime")
         return v
 
-    @field_validator("start_datetime")
-    def validate_start_datetime_future(cls, v: datetime) -> datetime:
-        """
-        Valida que start_datetime sea en el futuro.
-        """
-        if v <= datetime.now():
-            raise ValueError("start_datetime debe ser una fecha y hora futura")
-        return v
+    # Nota: Para UPDATE no validamos que start_datetime sea futura
+    # ya que puede estar actualizando una cita pasada
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -53,8 +47,8 @@ class UpdateAppointmentRequest(BaseModel):
                 "service_id": 3,
                 "customer_id": 15,
                 "status_maintable_id": 1,
-                "start_datetime": "2025-12-25T10:00:00",
-                "end_datetime": "2025-12-25T11:30:00",
+                "start_datetime": "2025-10-25T10:00:00",
+                "end_datetime": "2025-10-25T11:30:00",
             }
         },
         validate_assignment=True,
