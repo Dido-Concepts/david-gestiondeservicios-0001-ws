@@ -63,7 +63,7 @@ class EvolutionApiService:
                 # Verificar si la respuesta fue exitosa
                 response.raise_for_status()
 
-                return response.json()
+                return response.json()  # type: ignore[no-any-return]
 
         except httpx.TimeoutException:
             raise Exception("Timeout al conectar con Evolution API")
@@ -98,7 +98,7 @@ class EvolutionApiService:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.get(url=url, headers=headers)
                 response.raise_for_status()
-                return response.json()
+                return response.json()  # type: ignore[no-any-return]
 
         except Exception as e:
             raise Exception(f"Error al obtener estado de instancia: {str(e)}")
