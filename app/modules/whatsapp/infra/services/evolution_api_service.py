@@ -1,8 +1,11 @@
+from os import getenv
 from typing import Any, Dict, Optional
 
 import httpx
 
-from config.setting import EVOLUTION_API_KEY, EVOLUTION_URL, INSTANCE_NAME
+EVOLUTION_URL = getenv("EVOLUCION_URL", "")
+EVOLUTION_API_KEY = getenv("EVOLUCION_API_KEY", "")
+INSTANCE_NAME = getenv("INSTANCE_NAME", "")
 
 
 class EvolutionApiService:
