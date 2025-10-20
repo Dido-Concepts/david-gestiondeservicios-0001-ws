@@ -1,5 +1,5 @@
-from pathlib import Path
 from os import getenv
+from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -23,3 +23,8 @@ VALID_APP_SCOPES = [
     "admin",  # Operaciones administrativas
     "api",  # Acceso general a API
 ]
+
+# Configuración para Evolution API (WhatsApp)
+EVOLUTION_URL = getenv("EVOLUCION_URL", "")
+EVOLUTION_API_KEY = getenv("EVOLUCION_API_KEY", "")
+INSTANCE_NAME = getenv("INSTANCE_NAME", "")

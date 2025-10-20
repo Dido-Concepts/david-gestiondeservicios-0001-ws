@@ -19,6 +19,9 @@ from app.modules.services.presentation.routes.v2.services_v2_routes import (
 from app.modules.share.infra.mediator_config import MediatorManager
 from app.modules.staff.presentation.routes.v2.staff_v2_routes import StaffV2Controller
 from app.modules.test.presentation.routes.v2.test_v2_routes import TestController
+from app.modules.whatsapp.presentation.routes.v2.whatsapp_v2_routes import (
+    WhatsappV2Controller,
+)
 
 
 def create_v2_app(mediator: Optional[Mediator] = None) -> FastAPI:
@@ -47,6 +50,7 @@ def create_v2_app(mediator: Optional[Mediator] = None) -> FastAPI:
     customer_controller = CustomerV2Controller(mediator)
     services_controller = ServicesV2Controller(mediator)
     staff_controller = StaffV2Controller(mediator)
+    whatsapp_controller = WhatsappV2Controller(mediator)
 
     # Incluir rutas sin prefijo adicional ya que están montadas en /api/v2
     app.include_router(test_controller.router, tags=["Test"])
@@ -55,5 +59,6 @@ def create_v2_app(mediator: Optional[Mediator] = None) -> FastAPI:
     app.include_router(customer_controller.router, tags=["Customer"])
     app.include_router(services_controller.router, tags=["Services"])
     app.include_router(staff_controller.router, tags=["Staff"])
+    app.include_router(whatsapp_controller.router, tags=["WhatsApp"])
 
     return app
