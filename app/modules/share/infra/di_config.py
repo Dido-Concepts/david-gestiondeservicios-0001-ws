@@ -30,6 +30,12 @@ from app.modules.maintable.domain.repositories.maintable_repository import (
 from app.modules.maintable.infra.repositories.maintable_implementation_repository import (
     MaintableImplementationRepository,
 )
+from app.modules.notifications.domain.repositories.notification_location_repository import (
+    NotificationLocationRepository,
+)
+from app.modules.notifications.infra.repositories.notification_location_implementation_repository import (
+    NotificationLocationImplementationRepository,
+)
 from app.modules.services.domain.repositories.category_repository import (
     CategoryRepository,
 )
@@ -114,3 +120,9 @@ class AppModule(Module):
     @provider
     def provide_appointment_repository(self) -> AppointmentRepository:
         return AppointmentImplementationRepository()
+
+    @provider
+    def provide_notification_location_repository(
+        self,
+    ) -> NotificationLocationRepository:
+        return NotificationLocationImplementationRepository()

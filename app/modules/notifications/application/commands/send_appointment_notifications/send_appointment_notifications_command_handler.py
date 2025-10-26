@@ -94,7 +94,7 @@ class SendAppointmentNotificationsCommandHandler(
 
                     # Enviar mensaje directamente usando el servicio de WhatsApp
                     await self.whatsapp_service.send_text_message(
-                        number=appointment.customer_phone,
+                        number=f"51{appointment.customer_phone}",
                         text=message,
                         delay=None,
                         link_preview=False,

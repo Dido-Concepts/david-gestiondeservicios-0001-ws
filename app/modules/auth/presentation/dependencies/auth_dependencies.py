@@ -30,7 +30,27 @@ app_token_service = AppToAppTokenService(APP_SECRET_KEY, app_token_repository)
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> UserAuth:
+    """
+    Obtiene información del usuario actual, soportando tanto tokens de Google como app-to-app.
+    Para tokens app-to-app, asigna el nombre de la app como email.
+    """
     token = credentials.credentials
+
+    # Primero intentar con token app-to-app
+    try:
+        auth_result = await app_token_service.validate_token(token)
+        if auth_result.is_valid:
+            # Crear un UserAuth con información del token app-to-app
+            return UserAuth(
+                email=auth_result.app_name,
+                name=auth_result.app_name,
+                sub=auth_result.app_name,
+                iss="app_to_app",
+            )
+    except Exception:
+        pass  # Continuar con validación de Google
+
+    # Intentar con token de Google
     try:
         user_info = google_auth_service.verify_token(token)
         return user_info

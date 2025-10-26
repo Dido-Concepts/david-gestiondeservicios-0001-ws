@@ -4,6 +4,8 @@ from typing import Optional
 from fastapi import FastAPI
 from mediatr import Mediator
 
+# Importar módulos para registrar handlers
+import app.modules.notifications  # noqa: F401
 from app.modules.appointment.presentation.routes.v2.appointment_v2_routes import (
     AppointmentV2Controller,
 )
