@@ -13,6 +13,9 @@ from app.modules.customer.presentation.routes.v2.customer_v2_routes import (
 from app.modules.location.presentation.routes.v2.location_v2_routes import (
     LocationV2Controller,
 )
+from app.modules.notifications.presentation.routes.v2.notifications_v2_routes import (
+    NotificationsV2Controller,
+)
 from app.modules.services.presentation.routes.v2.services_v2_routes import (
     ServicesV2Controller,
 )
@@ -51,6 +54,7 @@ def create_v2_app(mediator: Optional[Mediator] = None) -> FastAPI:
     services_controller = ServicesV2Controller(mediator)
     staff_controller = StaffV2Controller(mediator)
     whatsapp_controller = WhatsappV2Controller(mediator)
+    notifications_controller = NotificationsV2Controller(mediator)
 
     # Incluir rutas sin prefijo adicional ya que están montadas en /api/v2
     app.include_router(test_controller.router, tags=["Test"])
@@ -60,5 +64,6 @@ def create_v2_app(mediator: Optional[Mediator] = None) -> FastAPI:
     app.include_router(services_controller.router, tags=["Services"])
     app.include_router(staff_controller.router, tags=["Staff"])
     app.include_router(whatsapp_controller.router, tags=["WhatsApp"])
+    app.include_router(notifications_controller.router, tags=["Notifications"])
 
     return app
