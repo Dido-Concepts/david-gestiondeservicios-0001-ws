@@ -7,6 +7,9 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.constants import injector_var
 from app.modules.auth.domain.models.app_to_app_auth_domain import AppToAppAuth
 from app.modules.auth.domain.models.user_auth_domain import UserAuth
+from app.modules.auth.infra.repositories.app_to_app_token_implementation_repository import (
+    AppToAppTokenImplementationRepository,
+)
 from app.modules.auth.infra.services.app_to_app_token_service import (
     AppToAppTokenService,
 )
@@ -18,7 +21,10 @@ APP_SECRET_KEY = getenv("APP_SECRET_KEY", "your-secret-key-here")
 
 security = HTTPBearer()
 google_auth_service = GoogleAuthService(GOOGLE_CLIENT_ID)
-app_token_service = AppToAppTokenService(APP_SECRET_KEY)
+
+# Crear instancia del repositorio y servicio
+app_token_repository = AppToAppTokenImplementationRepository()
+app_token_service = AppToAppTokenService(APP_SECRET_KEY, app_token_repository)
 
 
 async def get_current_user(
@@ -38,7 +44,7 @@ async def get_current_user(
 async def _validate_app_to_app_permissions(token: str, roles: list[str]) -> bool:
     """Valida permisos de token app-to-app. Retorna True si es válido, False si no es app-to-app."""
     try:
-        auth_result = app_token_service.validate_token(token)
+        auth_result = await app_token_service.validate_token(token)
         if not auth_result.is_valid:
             return False
 
@@ -113,7 +119,7 @@ async def get_app_to_app_auth(
     token = credentials.credentials
 
     try:
-        auth_result = app_token_service.validate_token(token)
+        auth_result = await app_token_service.validate_token(token)
 
         if not auth_result.is_valid:
             raise HTTPException(
@@ -154,14 +160,14 @@ def app_to_app_permission_required(
     return scope_verifier
 
 
-def app_to_app_auth_optional(
+async def app_to_app_auth_optional(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> AppToAppAuth | None:
     """Dependency opcional para tokens app-to-app que no falla si el token es inválido."""
 
     try:
         token = credentials.credentials
-        auth_result = app_token_service.validate_token(token)
+        auth_result = await app_token_service.validate_token(token)
         return auth_result if auth_result.is_valid else None
     except Exception:
         return None

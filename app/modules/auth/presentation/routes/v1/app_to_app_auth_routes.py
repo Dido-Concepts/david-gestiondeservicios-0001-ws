@@ -11,8 +11,10 @@ from app.modules.auth.application.app_to_app_use_cases import (
     ValidateAppToAppTokenUseCase,
 )
 from app.modules.auth.presentation.dependencies.auth_dependencies import (
-    permission_required,
     app_token_service,  # Usar la instancia compartida
+)
+from app.modules.auth.presentation.dependencies.auth_dependencies import (
+    permission_required,
 )
 
 router = APIRouter(prefix="/auth/app-to-app", tags=["App-to-App Authentication"])
@@ -200,9 +202,10 @@ async def revoke_app_token(
 @router.get("/tokens/debug")
 async def debug_auth():
     """Endpoint de debug temporal para probar autenticación."""
+    tokens = await token_service.list_tokens()
     return {
         "message": "Debug endpoint accessible",
         "token_service_initialized": token_service is not None,
-        "current_tokens": len(token_service._tokens),
-        "tokens_list": list(token_service._tokens.keys()),
+        "current_tokens": len(tokens),
+        "tokens_list": [token.app_name for token in tokens],
     }

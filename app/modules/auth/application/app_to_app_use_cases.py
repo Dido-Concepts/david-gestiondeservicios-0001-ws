@@ -40,7 +40,7 @@ class CreateAppToAppTokenUseCase:
         if expires_in_days is not None and expires_in_days <= 0:
             raise ValueError("Los días de expiración deben ser mayor a 0")
 
-        return self.token_service.generate_token(
+        return await self.token_service.generate_token(
             app_name=app_name.strip(),
             description=description,
             expires_in_days=expires_in_days,
@@ -63,7 +63,7 @@ class ValidateAppToAppTokenUseCase:
             raise ValueError("El token es requerido")
 
         # Validar el token
-        auth_result = self.token_service.validate_token(token.strip())
+        auth_result = await self.token_service.validate_token(token.strip())
 
         # Si el token es válido y se requiere un scope específico, verificarlo
         if auth_result.is_valid and required_scope:
@@ -85,7 +85,7 @@ class RevokeAppToAppTokenUseCase:
         if not token or not token.strip():
             raise ValueError("El token es requerido")
 
-        return self.token_service.revoke_token(token.strip())
+        return await self.token_service.revoke_token(token.strip())
 
 
 class ListAppToAppTokensUseCase:
@@ -97,7 +97,7 @@ class ListAppToAppTokensUseCase:
     async def execute(self, app_name: Optional[str] = None) -> list[AppToAppToken]:
         """Lista tokens, opcionalmente filtrados por aplicación."""
 
-        return self.token_service.list_tokens(app_name)
+        return await self.token_service.list_tokens(app_name)
 
 
 class GetAppToAppTokenInfoUseCase:
@@ -112,4 +112,4 @@ class GetAppToAppTokenInfoUseCase:
         if not token or not token.strip():
             raise ValueError("El token es requerido")
 
-        return self.token_service.get_token_info(token.strip())
+        return await self.token_service.get_token_info(token.strip())
