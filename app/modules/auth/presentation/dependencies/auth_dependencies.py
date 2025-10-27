@@ -1,3 +1,24 @@
+"""
+Dependencias de autenticación para FastAPI.
+
+ARQUITECTURA DE SERVICIOS APP-TO-APP:
+
+1. AppToAppTokenService (con UnitOfWork):
+   - Usado para operaciones de gestión: crear, listar, revocar tokens
+   - Depende del repositorio que usa UnitOfWork
+   - Apropiado para operaciones dentro del contexto de request
+
+2. AppToAppDirectService (sin UnitOfWork):
+   - Usado EXCLUSIVAMENTE para validación de tokens durante autenticación
+   - Maneja conexiones de BD explícitamente (abre/cierra)
+   - NO depende de UnitOfWork para evitar problemas de contexto
+   - Específico para operaciones críticas de autenticación
+
+Esta separación garantiza que la validación de tokens app-to-app sea independiente
+del contexto de UnitOfWork, evitando errores cuando el middleware no ha configurado
+aún el contexto de la transacción.
+"""
+
 from os import getenv
 from typing import Awaitable, Callable
 
@@ -9,6 +30,9 @@ from app.modules.auth.domain.models.app_to_app_auth_domain import AppToAppAuth
 from app.modules.auth.domain.models.user_auth_domain import UserAuth
 from app.modules.auth.infra.repositories.app_to_app_token_implementation_repository import (
     AppToAppTokenImplementationRepository,
+)
+from app.modules.auth.infra.services.app_to_app_direct_service import (
+    AppToAppDirectService,
 )
 from app.modules.auth.infra.services.app_to_app_token_service import (
     AppToAppTokenService,
@@ -28,9 +52,23 @@ def get_app_token_service() -> AppToAppTokenService:
     Factory function para crear AppToAppTokenService dentro del contexto de UnitOfWork.
     Esta función se debe llamar solo dentro del contexto de un request donde el middleware
     ya ha configurado el UnitOfWork en uow_var.
+
+    NOTA: Este servicio usa el repositorio con UnitOfWork y está destinado para operaciones
+    de gestión de tokens (crear, listar, revocar, etc.).
     """
     app_token_repository = AppToAppTokenImplementationRepository()
     return AppToAppTokenService(APP_SECRET_KEY, app_token_repository)
+
+
+def get_app_token_direct_service() -> AppToAppDirectService:
+    """
+    Factory function para crear AppToAppDirectService que maneja conexiones explícitamente.
+    Este servicio NO usa UnitOfWork y es específico para validaciones de autenticación críticas.
+
+    NOTA: Este servicio abre y cierra explícitamente las conexiones de BD, evitando
+    dependencias del UnitOfWork durante la validación de tokens de autenticación.
+    """
+    return AppToAppDirectService(APP_SECRET_KEY)
 
 
 def get_app_token_service_dependency() -> AppToAppTokenService:
@@ -41,9 +79,19 @@ def get_app_token_service_dependency() -> AppToAppTokenService:
     return get_app_token_service()
 
 
+def get_app_token_direct_service_dependency() -> AppToAppDirectService:
+    """
+    Dependency function para FastAPI que crea AppToAppDirectService.
+    Este servicio maneja conexiones de BD explícitamente sin UnitOfWork.
+    """
+    return get_app_token_direct_service()
+
+
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    app_token_service: AppToAppTokenService = Depends(get_app_token_service_dependency),
+    app_token_direct_service: AppToAppDirectService = Depends(
+        get_app_token_direct_service_dependency
+    ),
 ) -> UserAuth:
     """
     Obtiene información del usuario actual, soportando tanto tokens de Google como app-to-app.
@@ -53,7 +101,7 @@ async def get_current_user(
 
     # Primero intentar con token app-to-app
     try:
-        auth_result = await app_token_service.validate_token(token)
+        auth_result = await app_token_direct_service.validate_token(token)
         if auth_result.is_valid:
             # Crear un UserAuth con información del token app-to-app
             return UserAuth(
@@ -77,11 +125,11 @@ async def get_current_user(
 
 
 async def _validate_app_to_app_permissions(
-    token: str, roles: list[str], app_token_service: AppToAppTokenService
+    token: str, roles: list[str], app_token_direct_service: AppToAppDirectService
 ) -> bool:
     """Valida permisos de token app-to-app. Retorna True si es válido, False si no es app-to-app."""
     try:
-        auth_result = await app_token_service.validate_token(token)
+        auth_result = await app_token_direct_service.validate_token(token)
         if not auth_result.is_valid:
             return False
 
@@ -128,14 +176,16 @@ async def _validate_google_user_permissions(token: str, roles: list[str]) -> Non
 def permission_required(roles: list[str]) -> Callable[..., Awaitable[None]]:
     async def permission_verifier(
         credentials: HTTPAuthorizationCredentials = Depends(security),
-        app_token_service: AppToAppTokenService = Depends(
-            get_app_token_service_dependency
+        app_token_direct_service: AppToAppDirectService = Depends(
+            get_app_token_direct_service_dependency
         ),
     ) -> None:
         token = credentials.credentials
 
         # Intentar primero con token app-to-app
-        if await _validate_app_to_app_permissions(token, roles, app_token_service):
+        if await _validate_app_to_app_permissions(
+            token, roles, app_token_direct_service
+        ):
             return  # Token app-to-app válido y autorizado
 
         # Intentar con token de Google
@@ -154,13 +204,15 @@ def permission_required(roles: list[str]) -> Callable[..., Awaitable[None]]:
 
 async def get_app_to_app_auth(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    app_token_service: AppToAppTokenService = Depends(get_app_token_service_dependency),
+    app_token_direct_service: AppToAppDirectService = Depends(
+        get_app_token_direct_service_dependency
+    ),
 ) -> AppToAppAuth:
     """Validar token de aplicación a aplicación."""
     token = credentials.credentials
 
     try:
-        auth_result = await app_token_service.validate_token(token)
+        auth_result = await app_token_direct_service.validate_token(token)
 
         if not auth_result.is_valid:
             raise HTTPException(
@@ -203,13 +255,15 @@ def app_to_app_permission_required(
 
 async def app_to_app_auth_optional(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    app_token_service: AppToAppTokenService = Depends(get_app_token_service_dependency),
+    app_token_direct_service: AppToAppDirectService = Depends(
+        get_app_token_direct_service_dependency
+    ),
 ) -> AppToAppAuth | None:
     """Dependency opcional para tokens app-to-app que no falla si el token es inválido."""
 
     try:
         token = credentials.credentials
-        auth_result = await app_token_service.validate_token(token)
+        auth_result = await app_token_direct_service.validate_token(token)
         return auth_result if auth_result.is_valid else None
     except Exception:
         return None
