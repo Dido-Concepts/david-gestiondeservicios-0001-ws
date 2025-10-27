@@ -33,12 +33,17 @@ def get_app_token_service() -> AppToAppTokenService:
     return AppToAppTokenService(APP_SECRET_KEY, app_token_repository)
 
 
-# Variable global para compatibilidad hacia atrás, pero ahora usa la factory
-app_token_service = get_app_token_service()
+def get_app_token_service_dependency() -> AppToAppTokenService:
+    """
+    Dependency function para FastAPI que crea AppToAppTokenService.
+    Se ejecuta dentro del contexto de la request donde el UnitOfWork ya está configurado.
+    """
+    return get_app_token_service()
 
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
+    app_token_service: AppToAppTokenService = Depends(get_app_token_service_dependency),
 ) -> UserAuth:
     """
     Obtiene información del usuario actual, soportando tanto tokens de Google como app-to-app.
@@ -48,9 +53,7 @@ async def get_current_user(
 
     # Primero intentar con token app-to-app
     try:
-        # Usar factory para crear servicio dentro del contexto actual
-        current_app_token_service = get_app_token_service()
-        auth_result = await current_app_token_service.validate_token(token)
+        auth_result = await app_token_service.validate_token(token)
         if auth_result.is_valid:
             # Crear un UserAuth con información del token app-to-app
             return UserAuth(
@@ -73,12 +76,12 @@ async def get_current_user(
         )
 
 
-async def _validate_app_to_app_permissions(token: str, roles: list[str]) -> bool:
+async def _validate_app_to_app_permissions(
+    token: str, roles: list[str], app_token_service: AppToAppTokenService
+) -> bool:
     """Valida permisos de token app-to-app. Retorna True si es válido, False si no es app-to-app."""
     try:
-        # Usar factory para crear servicio dentro del contexto actual
-        current_app_token_service = get_app_token_service()
-        auth_result = await current_app_token_service.validate_token(token)
+        auth_result = await app_token_service.validate_token(token)
         if not auth_result.is_valid:
             return False
 
@@ -125,11 +128,14 @@ async def _validate_google_user_permissions(token: str, roles: list[str]) -> Non
 def permission_required(roles: list[str]) -> Callable[..., Awaitable[None]]:
     async def permission_verifier(
         credentials: HTTPAuthorizationCredentials = Depends(security),
+        app_token_service: AppToAppTokenService = Depends(
+            get_app_token_service_dependency
+        ),
     ) -> None:
         token = credentials.credentials
 
         # Intentar primero con token app-to-app
-        if await _validate_app_to_app_permissions(token, roles):
+        if await _validate_app_to_app_permissions(token, roles, app_token_service):
             return  # Token app-to-app válido y autorizado
 
         # Intentar con token de Google
@@ -148,14 +154,13 @@ def permission_required(roles: list[str]) -> Callable[..., Awaitable[None]]:
 
 async def get_app_to_app_auth(
     credentials: HTTPAuthorizationCredentials = Depends(security),
+    app_token_service: AppToAppTokenService = Depends(get_app_token_service_dependency),
 ) -> AppToAppAuth:
     """Validar token de aplicación a aplicación."""
     token = credentials.credentials
 
     try:
-        # Usar factory para crear servicio dentro del contexto actual
-        current_app_token_service = get_app_token_service()
-        auth_result = await current_app_token_service.validate_token(token)
+        auth_result = await app_token_service.validate_token(token)
 
         if not auth_result.is_valid:
             raise HTTPException(
@@ -198,14 +203,13 @@ def app_to_app_permission_required(
 
 async def app_to_app_auth_optional(
     credentials: HTTPAuthorizationCredentials = Depends(security),
+    app_token_service: AppToAppTokenService = Depends(get_app_token_service_dependency),
 ) -> AppToAppAuth | None:
     """Dependency opcional para tokens app-to-app que no falla si el token es inválido."""
 
     try:
         token = credentials.credentials
-        # Usar factory para crear servicio dentro del contexto actual
-        current_app_token_service = get_app_token_service()
-        auth_result = await current_app_token_service.validate_token(token)
+        auth_result = await app_token_service.validate_token(token)
         return auth_result if auth_result.is_valid else None
     except Exception:
         return None
