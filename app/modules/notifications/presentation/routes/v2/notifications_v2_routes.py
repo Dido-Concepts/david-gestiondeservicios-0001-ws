@@ -13,6 +13,9 @@ from app.modules.notifications.application.commands.deactivate_notification_loca
 )
 
 # Importar todos los handlers para que se registren en MediatR
+from app.modules.notifications.application.commands.manage_n8n_workflow.manage_n8n_workflow_command_handler import (
+    ManageN8nWorkflowCommand,
+)
 from app.modules.notifications.application.commands.send_appointment_notifications.send_appointment_notifications_command_handler import (
     SendAppointmentNotificationsCommand,
 )
@@ -24,6 +27,12 @@ from app.modules.notifications.application.queries.get_active_notification_locat
 )
 from app.modules.notifications.application.queries.get_all_locations_notification_status.get_all_locations_notification_status_query_handler import (
     GetAllLocationsNotificationStatusQuery,
+)
+from app.modules.notifications.application.queries.get_n8n_workflow_status.get_n8n_workflow_status_query_handler import (
+    GetN8nWorkflowStatusQuery,
+)
+from app.modules.notifications.application.request.manage_n8n_workflow_request import (
+    ManageN8nWorkflowRequest,
 )
 from app.modules.notifications.application.request.notification_location_requests import (
     DeactivateNotificationLocationRequest,
@@ -161,6 +170,53 @@ class NotificationsV2Controller:
             },
         )(self.send_appointment_notifications)
 
+        self.router.post(
+            "/notifications/n8n/manage",
+            dependencies=[Depends(permission_required(roles=["admin"]))],
+            responses={
+                200: {
+                    "description": "Workflow de N8N gestionado exitosamente",
+                    "content": {
+                        "application/json": {
+                            "example": {
+                                "success": True,
+                                "message": "Workflow de N8N activado exitosamente",
+                                "workflow_id": "HHle98I8JYdDvXi3",
+                                "status": "active",
+                                "action": "activate",
+                            }
+                        }
+                    },
+                },
+                400: {"description": "Error en los datos enviados"},
+                500: {"description": "Error interno del servidor"},
+            },
+        )(self.manage_n8n_workflow)
+
+        self.router.get(
+            "/notifications/n8n/status",
+            dependencies=[Depends(permission_required(roles=["admin", "staff"]))],
+            responses={
+                200: {
+                    "description": "Estado del workflow de N8N obtenido exitosamente",
+                    "content": {
+                        "application/json": {
+                            "example": {
+                                "success": True,
+                                "workflow_id": "HHle98I8JYdDvXi3",
+                                "is_active": True,
+                                "status": "active",
+                                "workflow_name": "Notification Workflow",
+                                "last_updated": "2025-10-26T10:30:00Z",
+                                "created_at": "2025-10-01T08:00:00Z",
+                            }
+                        }
+                    },
+                },
+                500: {"description": "Error interno del servidor"},
+            },
+        )(self.get_n8n_workflow_status)
+
     async def get_all_locations_notification_status(
         self,
     ) -> List[LocationNotificationStatusEntity]:
@@ -276,6 +332,69 @@ class NotificationsV2Controller:
                 raise HTTPException(
                     status_code=500,
                     detail=result.get("message", "Error al enviar notificaciones"),
+                )
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+
+    async def manage_n8n_workflow(
+        self,
+        request: ManageN8nWorkflowRequest,
+        current_user: UserAuth = Depends(get_current_user),
+    ) -> Dict[str, Any]:
+        """
+        Activa o desactiva el workflow de N8N para las notificaciones automatizadas.
+
+        Campos requeridos:
+        - activate: true para activar, false para desactivar
+
+        Solo usuarios con rol admin pueden ejecutar esta acción.
+        """
+        try:
+            command = ManageN8nWorkflowCommand(activate=request.activate)
+            result: Dict[str, Any] = await self.mediator.send_async(command)
+
+            if result.get("success"):
+                return result
+            else:
+                raise HTTPException(
+                    status_code=500,
+                    detail=result.get(
+                        "message", "Error al gestionar el workflow de N8N"
+                    ),
+                )
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+
+    async def get_n8n_workflow_status(
+        self,
+        current_user: UserAuth = Depends(get_current_user),
+    ) -> Dict[str, Any]:
+        """
+        Obtiene el estado actual del workflow de N8N.
+
+        Retorna información detallada sobre si el workflow está activo o inactivo,
+        junto con metadatos adicionales como nombre, fechas de creación y actualización.
+
+        Solo usuarios con rol admin o staff pueden consultar esta información.
+        """
+        try:
+            query = GetN8nWorkflowStatusQuery()
+            result: Dict[str, Any] = await self.mediator.send_async(query)
+
+            if result.get("success"):
+                return result
+            else:
+                raise HTTPException(
+                    status_code=500,
+                    detail=result.get(
+                        "message", "Error al consultar el estado del workflow de N8N"
+                    ),
                 )
 
         except HTTPException:
