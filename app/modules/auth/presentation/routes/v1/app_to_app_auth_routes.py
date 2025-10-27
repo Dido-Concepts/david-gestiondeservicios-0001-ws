@@ -10,8 +10,11 @@ from app.modules.auth.application.app_to_app_use_cases import (
     RevokeAppToAppTokenUseCase,
     ValidateAppToAppTokenUseCase,
 )
+from app.modules.auth.infra.services.app_to_app_token_service import (
+    AppToAppTokenService,
+)
 from app.modules.auth.presentation.dependencies.auth_dependencies import (
-    app_token_service,  # Usar la instancia compartida
+    get_app_token_service,  # Usar la factory function en lugar de la instancia
 )
 from app.modules.auth.presentation.dependencies.auth_dependencies import (
     permission_required,
@@ -19,8 +22,10 @@ from app.modules.auth.presentation.dependencies.auth_dependencies import (
 
 router = APIRouter(prefix="/auth/app-to-app", tags=["App-to-App Authentication"])
 
-# Usar la instancia compartida del servicio
-token_service = app_token_service
+
+def get_token_service() -> AppToAppTokenService:
+    """Obtener instancia del servicio de tokens usando la factory."""
+    return get_app_token_service()
 
 
 # Modelos Pydantic para las requests/responses
@@ -67,7 +72,7 @@ async def create_app_token(
     """Crear un nuevo token de aplicación a aplicación."""
 
     try:
-        use_case = CreateAppToAppTokenUseCase(token_service)
+        use_case = CreateAppToAppTokenUseCase(get_token_service())
         token = await use_case.execute(
             app_name=request.app_name,
             description=request.description,
@@ -96,7 +101,7 @@ async def validate_app_token(request: TokenValidationRequest):
     """Validar un token de aplicación a aplicación."""
 
     try:
-        use_case = ValidateAppToAppTokenUseCase(token_service)
+        use_case = ValidateAppToAppTokenUseCase(get_token_service())
         auth_result = await use_case.execute(
             token=request.token,
             required_scope=request.required_scope,
@@ -124,21 +129,27 @@ async def list_app_tokens(
 ):
     """Listar tokens de aplicación a aplicación."""
 
-    use_case = ListAppToAppTokensUseCase(token_service)
-    tokens = await use_case.execute(app_name=app_name)
+    try:
+        use_case = ListAppToAppTokensUseCase(get_token_service())
+        tokens = await use_case.execute(app_name=app_name)
 
-    return [
-        TokenResponse(
-            app_name=token.app_name,
-            token=token.token,
-            is_active=token.is_active,
-            created_at=token.created_at.isoformat(),
-            expires_at=token.expires_at.isoformat() if token.expires_at else None,
-            description=token.description,
-            allowed_scopes=token.allowed_scopes,
+        return [
+            TokenResponse(
+                app_name=token.app_name,
+                token=token.token,
+                is_active=token.is_active,
+                created_at=token.created_at.isoformat(),
+                expires_at=token.expires_at.isoformat() if token.expires_at else None,
+                description=token.description,
+                allowed_scopes=token.allowed_scopes,
+            )
+            for token in tokens
+        ]
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
         )
-        for token in tokens
-    ]
 
 
 @router.get("/tokens/{token}", response_model=TokenResponse)
@@ -149,7 +160,7 @@ async def get_app_token_info(
     """Obtener información de un token específico."""
 
     try:
-        use_case = GetAppToAppTokenInfoUseCase(token_service)
+        use_case = GetAppToAppTokenInfoUseCase(get_token_service())
         token_info = await use_case.execute(token=token)
 
         if not token_info:
@@ -184,7 +195,7 @@ async def revoke_app_token(
     """Revocar un token de aplicación a aplicación."""
 
     try:
-        use_case = RevokeAppToAppTokenUseCase(token_service)
+        use_case = RevokeAppToAppTokenUseCase(get_token_service())
         success = await use_case.execute(token=request.token)
 
         if not success:
@@ -202,10 +213,11 @@ async def revoke_app_token(
 @router.get("/tokens/debug")
 async def debug_auth():
     """Endpoint de debug temporal para probar autenticación."""
-    tokens = await token_service.list_tokens()
+    current_token_service = get_token_service()
+    tokens = await current_token_service.list_tokens()
     return {
         "message": "Debug endpoint accessible",
-        "token_service_initialized": token_service is not None,
+        "token_service_initialized": current_token_service is not None,
         "current_tokens": len(tokens),
         "tokens_list": [token.app_name for token in tokens],
     }

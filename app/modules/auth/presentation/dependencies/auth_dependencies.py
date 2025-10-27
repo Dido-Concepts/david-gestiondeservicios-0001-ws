@@ -22,9 +22,19 @@ APP_SECRET_KEY = getenv("APP_SECRET_KEY", "your-secret-key-here")
 security = HTTPBearer()
 google_auth_service = GoogleAuthService(GOOGLE_CLIENT_ID)
 
-# Crear instancia del repositorio y servicio
-app_token_repository = AppToAppTokenImplementationRepository()
-app_token_service = AppToAppTokenService(APP_SECRET_KEY, app_token_repository)
+
+def get_app_token_service() -> AppToAppTokenService:
+    """
+    Factory function para crear AppToAppTokenService dentro del contexto de UnitOfWork.
+    Esta función se debe llamar solo dentro del contexto de un request donde el middleware
+    ya ha configurado el UnitOfWork en uow_var.
+    """
+    app_token_repository = AppToAppTokenImplementationRepository()
+    return AppToAppTokenService(APP_SECRET_KEY, app_token_repository)
+
+
+# Variable global para compatibilidad hacia atrás, pero ahora usa la factory
+app_token_service = get_app_token_service()
 
 
 async def get_current_user(
@@ -38,7 +48,9 @@ async def get_current_user(
 
     # Primero intentar con token app-to-app
     try:
-        auth_result = await app_token_service.validate_token(token)
+        # Usar factory para crear servicio dentro del contexto actual
+        current_app_token_service = get_app_token_service()
+        auth_result = await current_app_token_service.validate_token(token)
         if auth_result.is_valid:
             # Crear un UserAuth con información del token app-to-app
             return UserAuth(
@@ -64,7 +76,9 @@ async def get_current_user(
 async def _validate_app_to_app_permissions(token: str, roles: list[str]) -> bool:
     """Valida permisos de token app-to-app. Retorna True si es válido, False si no es app-to-app."""
     try:
-        auth_result = await app_token_service.validate_token(token)
+        # Usar factory para crear servicio dentro del contexto actual
+        current_app_token_service = get_app_token_service()
+        auth_result = await current_app_token_service.validate_token(token)
         if not auth_result.is_valid:
             return False
 
@@ -139,7 +153,9 @@ async def get_app_to_app_auth(
     token = credentials.credentials
 
     try:
-        auth_result = await app_token_service.validate_token(token)
+        # Usar factory para crear servicio dentro del contexto actual
+        current_app_token_service = get_app_token_service()
+        auth_result = await current_app_token_service.validate_token(token)
 
         if not auth_result.is_valid:
             raise HTTPException(
@@ -187,7 +203,9 @@ async def app_to_app_auth_optional(
 
     try:
         token = credentials.credentials
-        auth_result = await app_token_service.validate_token(token)
+        # Usar factory para crear servicio dentro del contexto actual
+        current_app_token_service = get_app_token_service()
+        auth_result = await current_app_token_service.validate_token(token)
         return auth_result if auth_result.is_valid else None
     except Exception:
         return None
