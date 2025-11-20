@@ -35,7 +35,7 @@ class ReportsV2Controller:
         query: Annotated[GetReportsExcelQuery, Depends()],
     ) -> StreamingResponse:
         """
-        Genera y devuelve un archivo Excel con los reportes filtrados por fecha y barbero.
+        Genera y devuelve un archivo Excel con los reportes filtrados por fecha, barbero y ubicación.
         """
         excel_buffer = await self.mediator.send_async(query)
 

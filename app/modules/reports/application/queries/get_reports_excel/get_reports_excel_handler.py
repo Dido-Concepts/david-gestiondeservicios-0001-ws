@@ -20,6 +20,7 @@ class GetReportsExcelQuery(BaseModel):
     start_date: datetime = Field(..., description="Fecha de inicio en formato YYYY-MM-DD")
     end_date: datetime = Field(..., description="Fecha de fin en formato YYYY-MM-DD")
     barber_id: Optional[int] = Field(default=None, description="ID del barbero (opcional)")
+    location_id: Optional[int] = Field(default=None, description="ID de la ubicación (opcional)")
 
     @validator("end_date")
     def validate_date_range(cls, v: datetime, values: Dict[str, Any]) -> datetime:
@@ -47,6 +48,10 @@ class GetReportsExcelQueryHandler:
         # Agregar filtro de barbero solo si se proporciona
         if query.barber_id is not None:
             filters["user_id"] = query.barber_id
+        
+        # Agregar filtro de ubicación solo si se proporciona
+        if query.location_id is not None:
+            filters["location_id"] = query.location_id
 
         # Obtener todos los datos sin paginación para el reporte
         repo_result = await self.appointment_repository.find_appointments_refactor(
