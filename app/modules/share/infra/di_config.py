@@ -36,6 +36,12 @@ from app.modules.notifications.domain.repositories.notification_location_reposit
 from app.modules.notifications.infra.repositories.notification_location_implementation_repository import (
     NotificationLocationImplementationRepository,
 )
+from app.modules.reviews.domain.repositories.review_repository import (
+    ReviewRepository,
+)
+from app.modules.reviews.infra.repositories.review_implementation_repository import (
+    ReviewImplementationRepository,
+)
 from app.modules.services.domain.repositories.category_repository import (
     CategoryRepository,
 )
@@ -126,3 +132,7 @@ class AppModule(Module):
         self,
     ) -> NotificationLocationRepository:
         return NotificationLocationImplementationRepository()
+
+    @provider
+    def provide_review_repository(self) -> ReviewRepository:
+        return ReviewImplementationRepository()
