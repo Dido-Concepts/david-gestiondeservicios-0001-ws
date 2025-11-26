@@ -41,3 +41,7 @@ SMTP_USE_SSL = getenv("SMTP_USE_SSL", "").lower() == "true"  # Usar false (START
 
 # URL base para los enlaces de review
 REVIEW_BASE_URL = getenv("REVIEW_BASE_URL", "")
+
+# Configuración CORS - URLs separadas por coma
+# Ejemplo: "http://localhost:3000,http://localhost:8000,https://midominio.com"
+CORS_ORIGINS = getenv("CORS_ORIGINS", "")
