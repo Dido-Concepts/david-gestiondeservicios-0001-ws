@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Aplicacion Web Service para la gestion de servicios de la barberia David"
 authors = ["Esteban Villantoy <villantoyesteban@gmail.com>"]
 readme = "README.md"
-packages = [{ include = "app" }]
+packages = [{ include = "app" }, { include = "config" }]
 include = ["app/templates/**/*"]
 
 
