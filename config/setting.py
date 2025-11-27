@@ -31,8 +31,8 @@ INSTANCE_NAME = getenv("INSTANCE_NAME", "")
 
 # Configuración SMTP para envío de correos
 SMTP_HOST = getenv("SMTP_HOST", "")
-SMTP_PORT = int(getenv("SMTP_PORT", ""))
-SMTP_PORT_SSL = int(getenv("SMTP_PORT_SSL", ""))
+SMTP_PORT = int(getenv("SMTP_PORT", "0") or "0")
+SMTP_PORT_SSL = int(getenv("SMTP_PORT_SSL", "0") or "0")
 SMTP_USERNAME = getenv("SMTP_USERNAME", "")  # Tu correo completo
 SMTP_PASSWORD = getenv("SMTP_PASSWORD", "")  # La que generaste
 SMTP_FROM_EMAIL = getenv("SMTP_FROM_EMAIL", "")  # Mismo correo

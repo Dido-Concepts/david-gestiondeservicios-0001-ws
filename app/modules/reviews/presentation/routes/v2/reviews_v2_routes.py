@@ -1,7 +1,8 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Path
+from fastapi import APIRouter, Depends, Path
 from mediatr import Mediator
+
 
 from app.modules.reviews.application.commands.process_appointment_for_review.process_appointment_for_review_handler import (
     ProcessAppointmentForReviewCommand,
@@ -21,6 +22,9 @@ from app.modules.reviews.application.queries.validate_token.validate_token_handl
 )
 from app.modules.reviews.application.request.submit_review_request import (
     SubmitReviewRequest,
+)
+from app.modules.auth.presentation.dependencies.auth_dependencies import (
+    permission_required,
 )
 
 
@@ -46,6 +50,7 @@ class ReviewsV2Controller:
         # API 1: Procesar cita para review
         self.router.post(
             "/reviews/process-appointment/{appointment_id}",
+            dependencies=[Depends(permission_required(roles=["admin", "staff"]))],
             description=(
                 "Procesa una cita para verificar si debe enviarse email de review. "
                 "Crea el review automáticamente si no existe."
@@ -55,6 +60,7 @@ class ReviewsV2Controller:
         # API 2: Marcar email como enviado
         self.router.patch(
             "/reviews/{review_id}/mark-sent",
+            dependencies=[Depends(permission_required(roles=["admin", "staff"]))],
             description="Marca un review como email enviado.",
         )(self.mark_email_sent)
 
