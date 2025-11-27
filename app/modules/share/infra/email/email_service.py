@@ -180,7 +180,7 @@ class EmailService(IEmailService):
             EmailResult con el resultado del envío.
         """
         # URL base para el review desde configuración
-        review_url = f"{REVIEW_BASE_URL}/{review_token}"
+        review_url = f"{REVIEW_BASE_URL}?token={review_token}"
         
         subject = "¿Cómo fue tu experiencia? - Déjanos tu opinión"
         
