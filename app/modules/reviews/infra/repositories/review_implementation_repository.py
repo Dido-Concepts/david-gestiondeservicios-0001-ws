@@ -11,6 +11,7 @@ from app.modules.reviews.domain.repositories.review_repository import ReviewRepo
 from app.modules.reviews.domain.entities.review_entity import (
     ProcessAppointmentForReviewResponse,
     MarkEmailSentResponse,
+    ReviewResponse,
     ValidateTokenResponse,
     SubmitReviewResponse,
     ReviewInfoForEmailResponse,
@@ -270,3 +271,47 @@ class ReviewImplementationRepository(ReviewRepository):
         except DBAPIError as e:
             handle_error(e)
             raise RuntimeError(f"Error de base de datos al enviar review: {e}")
+
+    async def get_reviews(
+        self,
+        review_id: Optional[int] = None,
+        appointment_id: Optional[int] = None,
+    ) -> list[ReviewResponse]:
+        """
+        Obtiene reviews con filtros opcionales.
+        Llama al procedimiento almacenado 'sp_get_reviews'.
+        """
+        sql_query = text(
+            "SELECT * FROM sp_get_reviews(:review_id, :appointment_id)"
+        )
+
+        params = {
+            "review_id": review_id,
+            "appointment_id": appointment_id,
+        }
+
+        try:
+            result = await self._uow.session.execute(sql_query, params)
+            rows = result.fetchall()
+
+            return [
+                ReviewResponse(
+                    review_id=row.review_id,
+                    appointment_id=row.appointment_id,
+                    token=row.token,
+                    rating=row.rating,
+                    comment=row.comment,
+                    token_expires_at=row.token_expires_at,
+                    reviewed_at=row.reviewed_at,
+                    email_sent_at=row.email_sent_at,
+                    annulled=row.annulled,
+                    insert_date=row.insert_date,
+                    update_date=row.update_date,
+                    user_create=row.user_create,
+                    user_modify=row.user_modify,
+                )
+                for row in rows
+            ]
+        except DBAPIError as e:
+            handle_error(e)
+            raise RuntimeError(f"Error de base de datos al obtener reviews: {e}")

@@ -4,6 +4,7 @@ from typing import Optional
 from app.modules.reviews.domain.entities.review_entity import (
     ProcessAppointmentForReviewResponse,
     MarkEmailSentResponse,
+    ReviewResponse,
     ValidateTokenResponse,
     SubmitReviewResponse,
     ReviewInfoForEmailResponse,
@@ -108,5 +109,23 @@ class ReviewRepository(ABC):
 
         Returns:
             SubmitReviewResponse con el resultado de la operación.
+        """
+        pass
+
+    @abstractmethod
+    async def get_reviews(
+        self,
+        review_id: Optional[int] = None,
+        appointment_id: Optional[int] = None,
+    ) -> list[ReviewResponse]:
+        """
+        Obtiene reviews según los filtros proporcionados.
+
+        Args:
+            review_id: (Opcional) El ID del review a obtener.
+            appointment_id: (Opcional) El ID de la cita asociada al review.
+
+        Returns:
+            Lista de ReviewResponse con los reviews obtenidos.
         """
         pass

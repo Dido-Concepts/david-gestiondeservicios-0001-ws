@@ -86,3 +86,20 @@ class SubmitReviewResponse:
     success: bool
     review_id: Optional[int]
     message: str
+
+
+@dataclass
+class ReviewResponse:
+    review_id: int
+    appointment_id: int
+    token: str
+    rating: Optional[int]
+    comment: Optional[str]
+    token_expires_at: datetime
+    reviewed_at: Optional[datetime]
+    email_sent_at: Optional[datetime]
+    annulled: bool
+    insert_date: datetime
+    update_date: Optional[datetime]
+    user_create: str
+    user_modify: Optional[str]

@@ -33,7 +33,7 @@ class ExcelGeneratorService:
         ws.title = "Reporte de Citas"
         
         # Agregar título
-        ws.merge_cells('A1:J1')
+        ws.merge_cells('A1:L1')
         title_cell = ws['A1']
         
         # Crear título con rango de fechas si están disponibles
@@ -55,7 +55,7 @@ class ExcelGeneratorService:
         # Agregar headers en la fila 3
         headers = [
             "ID Cita", "Cliente", "Barbero", "Servicio", "Precio", "Ubicación",
-            "Fecha Inicio", "Fecha Fin", "Estado", "Fecha Creación"
+            "Fecha Inicio", "Fecha Fin", "Estado", "Fecha Creación", "Rating", "Comentario"
         ]
         
         for col_num, header in enumerate(headers, 1):
@@ -91,6 +91,8 @@ class ExcelGeneratorService:
             ws.cell(row=row_num, column=8, value=row_data.get('end_datetime', ''))
             ws.cell(row=row_num, column=9, value=row_data.get('status_name', ''))
             ws.cell(row=row_num, column=10, value=row_data.get('insert_date', ''))
+            ws.cell(row=row_num, column=11, value=row_data.get('rating', ''))
+            ws.cell(row=row_num, column=12, value=row_data.get('comment', ''))
         
         # Agregar fila de total si hay datos
         if data:
